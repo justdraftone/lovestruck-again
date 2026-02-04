@@ -34,22 +34,6 @@ export default function SendLetter() {
     alert('Link copied to clipboard!');
   };
 
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'Valentine\'s Letter',
-          text: `${recipientName}, you have a Valentine's letter waiting for you!`,
-          url: letterLink,
-        });
-      } catch (error) {
-        handleCopyLink();
-      }
-    } else {
-      handleCopyLink();
-    }
-  };
-
   if (isSent) {
     return (
       <div className="page page--centered gradient-love">
@@ -78,7 +62,7 @@ export default function SendLetter() {
             </div>
 
             <div className="letter-sent__actions">
-              {/* <button onClick={handleShare} className="btn btn--primary btn-homepage">
+              {/* <button onClick={_handleShare} className="btn btn--primary btn-homepage">
                 Share Link
               </button> */}
               <button onClick={handleCopyLink} className="btn btn--primary btn-homepage">

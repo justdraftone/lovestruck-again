@@ -31,7 +31,7 @@ export default function CouplesQuizRemote() {
   const roomCode = useMemo(() => joinCode || generateRoomCode(), [joinCode]);
 
   const [phase, setPhase] = useState<GamePhase>(joinCode ? 'playing' : 'waiting');
-  const [playerName, setPlayerName] = useState('');
+  const [playerName] = useState('');
   const [partnerName, setPartnerName] = useState(joinCode ? 'Host' : '');
   const [partnerJoined, setPartnerJoined] = useState(!!joinCode);
   const [currentQuestion, setCurrentQuestion] = useState(0);
