@@ -1,8 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuizStore } from '../store/quizStore';
-import { questions } from '../data/questions';
+import { nigeriaQuestions, globalQuestions, Question } from '../data/questions';
 import { useSwipe } from '../hooks/useSwipe';
+
+// Helper function to select random questions
+function selectRandomQuestions(questions: Question[], count: number): Question[] {
+  const shuffled = [...questions].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, count);
+}
 
 export default function CouplesQuizLocal() {
   const navigate = useNavigate();
@@ -15,7 +21,11 @@ export default function CouplesQuizLocal() {
     addAnswer,
     nextQuestion,
     switchPartner,
-    setMode
+    setMode,
+    questionSet,
+    setQuestionSet,
+    selectedQuestionIds,
+    setSelectedQuestions
   } = useQuizStore();
 
   const [namesSet, setNamesSet] = useState(false);
@@ -23,12 +33,26 @@ export default function CouplesQuizLocal() {
   const [tempPartner2, setTempPartner2] = useState('');
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
   const [isSwiping, setIsSwiping] = useState<'left' | 'right' | null>(null);
-  const [isEntering, setIsEntering] = useState(false);
   const [showExplainer, setShowExplainer] = useState(() => {
     const hasSeenExplainer = localStorage.getItem('hasSeenExplainer');
     return !hasSeenExplainer;
   });
   const [isExplainerExiting, setIsExplainerExiting] = useState(false);
+
+  // Select questions based on question set
+  const questions = useMemo(() => {
+    const sourceQuestions = questionSet === 'nigeria' ? nigeriaQuestions : globalQuestions;
+
+    // If we already have selected question IDs, use those
+    if (selectedQuestionIds.length > 0) {
+      return sourceQuestions.filter(q => selectedQuestionIds.includes(q.id));
+    }
+
+    // Otherwise, select 7 random questions
+    const selected = selectRandomQuestions(sourceQuestions, 7);
+    setSelectedQuestions(selected.map(q => q.id));
+    return selected;
+  }, [questionSet, selectedQuestionIds, setSelectedQuestions]);
 
   useEffect(() => {
     setMode('couples-local');
@@ -43,24 +67,24 @@ export default function CouplesQuizLocal() {
 
   const processSwipe = (direction: 'left' | 'right') => {
     if (swipeDirection) return;
+
+    // Add both classes immediately like the original
     setIsSwiping(direction);
-    setTimeout(() => {
-      setSwipeDirection(direction);
-      setIsSwiping(null);
-    }, 150);
-    // Wait for card to fully disappear (150ms delay + 350ms CSS transition)
+    setSwipeDirection(direction);
+
+    // Wait for transition to complete (400ms transform + some buffer)
     setTimeout(() => {
       addAnswer(currentQuestion, direction);
+      setIsSwiping(null);
+
       if (currentQuestion + 1 >= questions.length) {
         navigate('/results/couples-local');
       } else {
         nextQuestion();
         switchPartner();
         setSwipeDirection(null);
-        setIsEntering(true);
-        setTimeout(() => setIsEntering(false), 250);
       }
-    }, 500);
+    }, 450);
   };
 
   const handleSwipeLeft = () => processSwipe('left');
@@ -71,9 +95,15 @@ export default function CouplesQuizLocal() {
   if (!namesSet) {
     return (
       <div className="page page--centered gradient-love">
-      
-      <div className="header__couples-form">
-        <img src="../../public/assets/illos/d1-x-loveorlies.svg" alt="" />
+
+      <div className="header">
+        <button onClick={() => navigate('/couples')} className="back-btn">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          Back
+        </button>
+        <img src="../../public/assets/illos/d1-x-loveorlies.svg" alt="" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} />
       </div>
 
         <div className="card mode-card mode-card__couples-names mode-card__couples-names-form">
@@ -112,10 +142,19 @@ export default function CouplesQuizLocal() {
     );
   }
 
-  const question = questions[currentQuestion];
   const currentPartnerName = currentPartner === 1 ? partner1Name : partner2Name;
   const progress = ((currentQuestion + 1) / questions.length) * 100;
-  const cardVariant = (currentQuestion % 4) + 1;
+
+  // Pre-render upcoming cards for deck effect
+  const upcomingCards = [0, 1, 2].map(offset => {
+    const questionIndex = currentQuestion + offset;
+    if (questionIndex >= questions.length) return null;
+    return {
+      question: questions[questionIndex],
+      variant: (questionIndex % 4) + 1,
+      isTop: offset === 0
+    };
+  }).filter(Boolean);
 
   const dismissExplainer = () => {
     setIsExplainerExiting(true);
@@ -136,12 +175,28 @@ export default function CouplesQuizLocal() {
     handleSwipeRight();
   };
 
+  const handleToggleQuestionSet = () => {
+    const newSet = questionSet === 'nigeria' ? 'global' : 'nigeria';
+    setQuestionSet(newSet);
+    setSelectedQuestions([]); // Clear selected questions to force new selection
+    navigate('/'); // Go back to home to restart quiz with new questions
+  };
+
   return (
     <div className="page gradient-love">
       <div className="header">
-        <img src="../../public/assets/illos/d1-x-loveorlies.svg" alt="" />
+        <img src="../../public/assets/illos/d1-x-loveorlies.svg" alt="" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} />
+        <div className="question-set-toggle">
+          <button
+            onClick={handleToggleQuestionSet}
+            className="btn btn--toggle"
+            aria-label="Toggle question set"
+          >
+            {questionSet === 'nigeria' ? '🇳🇬 Nigeria' : '🌍 Global'}
+          </button>
+        </div>
       </div>
-      
+
     {/* <div className='couples-quiz-container'> */}
         <p className="header__turn">{currentPartnerName}'{currentPartnerName.charAt(currentPartnerName.length-1) == 's'? '': 's'} Turn!</p>
 
@@ -153,53 +208,45 @@ export default function CouplesQuizLocal() {
           </button>
 
           <div className="card-stack">
-            {[...Array(Math.min(3, questions.length - currentQuestion - 1))].map((_, i) => {
-              const stackIndex = i + 1;
+            {upcomingCards.map((card, index) => {
+              if (!card) return null;
+
               return (
                 <div
-                  key={`stack-${stackIndex}`}
-                  className="quiz-card quiz-card--stack"
-                  style={{
-                    transform: `translateY(${stackIndex * 8}px) scale(${1 - stackIndex * 0.03})`,
-                    zIndex: 10 - stackIndex,
-                    opacity: 1 - stackIndex * 0.15,
-                  }}
-                  />
-                );
-              })}
+                  key={`question-${currentQuestion + index}`}
+                  className={`quiz-card quiz-card--variant-${card.variant} ${
+                    index === 0 && swipeDirection === 'left' ? 'quiz-card--swipe-left' :
+                    index === 0 && swipeDirection === 'right' ? 'quiz-card--swipe-right' :
+                    index === 0 && isSwiping === 'left' ? 'quiz-card--swiping-left' :
+                    index === 0 && isSwiping === 'right' ? 'quiz-card--swiping-right' : ''
+                  }`}
+                >
+                  <div className="card-content">
+                    <div className="emoji-icon">{card.question.emoji}</div>
+                    <h2 className="question-text">{card.question.text}</h2>
 
+                    {index === 0 && (
+                      <div className="answer-group answer-group--yn">
+                        <button onClick={handleSwipeLeftSafe} className="answer-btn answer-btn--icon" aria-label="No">
+                          <svg className="icon icon--red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                        <button onClick={handleSwipeRightSafe} className="answer-btn answer-btn--icon" aria-label="Yes">
+                          <svg className="icon icon--green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </button>
+                      </div>
+                    )}
 
-            <div
-              className={`quiz-card quiz-card--variant-${cardVariant} ${
-                swipeDirection === 'left' ? 'quiz-card--swipe-left' :
-                swipeDirection === 'right' ? 'quiz-card--swipe-right' :
-                isSwiping === 'left' ? 'quiz-card--swiping-left' :
-                isSwiping === 'right' ? 'quiz-card--swiping-right' : ''
-              } ${isEntering ? 'quiz-card--entering' : ''}`}
-              style={{ zIndex: 15 }}
-            >
-              <div className="card-content">
-              <div className="emoji-icon">🎵</div>
-              <h2 className="question-text">{question.text}</h2>
-
-              <div className="answer-group answer-group--yn">
-                <button onClick={handleSwipeLeftSafe} className="answer-btn answer-btn--icon" aria-label="No">
-                  <svg className="icon icon--red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-                <button onClick={handleSwipeRightSafe} className="answer-btn answer-btn--icon" aria-label="Yes">
-                  <svg className="icon icon--green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                  </svg>
-                </button>
-              </div>
-
-              <div className="card-brand">
-                <img src="../../public/assets/illos/d1-x-loveorlies-card.svg" alt="" /> 
-              </div>
-              </div>
-            </div>
+                    <div className="card-brand">
+                      <img src="../../public/assets/illos/d1-x-loveorlies-card.svg" alt="" />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
           
           <div className='highlight-glow'></div>
@@ -223,60 +270,33 @@ export default function CouplesQuizLocal() {
         <div className={`explainer ${isExplainerExiting ? 'explainer--exiting' : ''}`}>
           <div className="explainer__backdrop" onClick={dismissExplainer} />
           <div className="explainer__content">
-            <div className="explainer__instruction explainer__instruction--left">
-              <div className="explainer__icon-circle">
+
+            <div className='explainer__swipe'>
+              <button className="answer-btn answer-btn--icon">
                 <svg className="icon icon--red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
                 </svg>
-              </div>
-              <div className="explainer__arrow">
-                <svg className="icon icon--left" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M9.5 3.5c0-1.1.9-2 2-2s2 .9 2 2v8.59l4.79-4.79a2 2 0 012.83 2.83l-7.09 7.08a3 3 0 01-4.24 0L4.5 12.12a2 2 0 012.83-2.83L9.5 11.46V3.5z"/>
-                </svg>
-              </div>
-              <p className="explainer__text">Swipe/Tap red for No.</p>
-            </div>
+              </button>
 
-            <div className="explainer__card-preview">
-              {[2, 1].map((i) => (
-                <div
-                  key={`explainer-stack-${i}`}
-                  className="quiz-card quiz-card--stack"
-                  style={{
-                    transform: `translateY(${i * 8}px) scale(${1 - i * 0.03})`,
-                    zIndex: 10 - i,
-                    opacity: 0.6,
-                  }}
-                />
-              ))}
-              <div className="quiz-card" style={{ zIndex: 15, opacity: 0.9 }}>
-                <div className="emoji-icon">🎵</div>
-                <h2 className="question-text">{question.text}</h2>
-                <div className="card-brand">
-                  <span className="card-brand__logo">draftone</span>
-                  <span className="card-brand__divider">|</span>
-                  <span className="card-brand__tagline">Love or Lies</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="explainer__instruction explainer__instruction--right">
-              <div className="explainer__icon-circle">
-                <svg className="icon icon--green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <div className="explainer__arrow">
-                <svg className="icon icon--right" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M9.5 3.5c0-1.1.9-2 2-2s2 .9 2 2v8.59l4.79-4.79a2 2 0 012.83 2.83l-7.09 7.08a3 3 0 01-4.24 0L4.5 12.12a2 2 0 012.83-2.83L9.5 11.46V3.5z"/>
-                </svg>
-              </div>
-              <p className="explainer__text">Swipe/Tap green for Yes.</p>
+              <img src="/assets/icons/swipe-right.svg" alt="swipe right" />
+              <p>Tap X if it's a dealbreaker for you</p>
             </div>
 
             <button onClick={dismissExplainer} className="explainer__btn btn btn--primary">
               Let's goooo
             </button>
+
+            <div className='explainer__swipe'>
+              <button className="answer-btn answer-btn--icon">
+                <svg className="icon icon--green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                </svg>
+              </button>
+
+              <img src="/assets/icons/swipe-left.svg" alt="swipe left" />
+              <p>Tap green if you're cool with it</p>
+            </div>
+
           </div>
         </div>
       )}

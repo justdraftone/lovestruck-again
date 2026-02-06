@@ -1,6 +1,5 @@
-import { useState, useRef, useCallback } from 'react';
-import { Result } from '../data/results';
-import { CompatibilityReport } from '../lib/resultsEngine';
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { PersonaResult, CompatibilityReport } from '../lib/resultsEngine';
 import ResultCard from './ResultCard';
 import CompatibilityCard from './CompatibilityCard';
 import CtaCard from './CtaCard';
@@ -8,8 +7,8 @@ import CtaCard from './CtaCard';
 interface CouplesResultsProps {
   partner1Name: string;
   partner2Name: string;
-  partner1Result: Result;
-  partner2Result: Result;
+  partner1Result: PersonaResult;
+  partner2Result: PersonaResult;
   compatibility: CompatibilityReport;
   onPlayAgain: () => void;
 }
@@ -25,7 +24,52 @@ export default function CouplesResults({
   const [activePartner, setActivePartner] = useState<1 | 2>(1);
   const [isFlipping, setIsFlipping] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [shareView, setShareView] = useState<'compatibility' | 'partner1' | 'partner2'>('compatibility');
   const cardRef = useRef<HTMLDivElement>(null);
+  const [chemistryDisplay, setChemistryDisplay] = useState(0);
+  const [romanceDisplay, setRomanceDisplay] = useState(0);
+
+  // Count up animation for chemistry
+  useEffect(() => {
+    const duration = 1500;
+    const steps = 60;
+    const increment = compatibility.chemistryPercentage / steps;
+    const stepDuration = duration / steps;
+    let current = 0;
+
+    const timer = setInterval(() => {
+      current += increment;
+      if (current >= compatibility.chemistryPercentage) {
+        setChemistryDisplay(compatibility.chemistryPercentage);
+        clearInterval(timer);
+      } else {
+        setChemistryDisplay(Math.floor(current));
+      }
+    }, stepDuration);
+
+    return () => clearInterval(timer);
+  }, [compatibility.chemistryPercentage]);
+
+  // Count up animation for romance
+  useEffect(() => {
+    const duration = 1500;
+    const steps = 60;
+    const increment = compatibility.romancePercentage / steps;
+    const stepDuration = duration / steps;
+    let current = 0;
+
+    const timer = setInterval(() => {
+      current += increment;
+      if (current >= compatibility.romancePercentage) {
+        setRomanceDisplay(compatibility.romancePercentage);
+        clearInterval(timer);
+      } else {
+        setRomanceDisplay(Math.floor(current));
+      }
+    }, stepDuration);
+
+    return () => clearInterval(timer);
+  }, [compatibility.romancePercentage]);
 
   const handleDownload = useCallback(async () => {
     if (!cardRef.current) return;
@@ -85,13 +129,39 @@ export default function CouplesResults({
     }, 300);
   };
 
+  const handlePrevShareView = () => {
+    if (shareView === 'compatibility') {
+      setShareView('partner2');
+    } else if (shareView === 'partner1') {
+      setShareView('compatibility');
+    } else {
+      setShareView('partner1');
+    }
+  };
+
+  const handleNextShareView = () => {
+    if (shareView === 'compatibility') {
+      setShareView('partner1');
+    } else if (shareView === 'partner1') {
+      setShareView('partner2');
+    } else {
+      setShareView('compatibility');
+    }
+  };
+
   const currentPartnerName = activePartner === 1 ? partner1Name : partner2Name;
   const currentResult = activePartner === 1 ? partner1Result : partner2Result;
 
   return (
     <div className="page page--centered gradient-love" style={{ padding: '32px 24px' }}>
       <div className="header">
-        <img src="../../public/assets/illos/d1-x-loveorlies.svg" alt="" />
+        <button onClick={onPlayAgain} className="back-btn">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          Back
+        </button>
+        <img src="../../public/assets/illos/d1-x-loveorlies.svg" alt="" onClick={onPlayAgain} style={{ cursor: 'pointer' }} />
       </div>
       
       <div className="couples-results">
@@ -110,7 +180,7 @@ export default function CouplesResults({
             </svg>
             <span>Chemistry</span>
           </div>
-          <div className="stat-card__percentage">{compatibility.chemistryPercentage}%</div>
+          <div className="stat-card__percentage">{chemistryDisplay}%</div>
           <p className="stat-card__description">{compatibility.chemistryDescription}</p>
         </div>
 
@@ -121,7 +191,7 @@ export default function CouplesResults({
             </svg>
             <span>Romance</span>
           </div>
-          <div className="stat-card__percentage">{compatibility.romancePercentage}%</div>
+          <div className="stat-card__percentage">{romanceDisplay}%</div>
           <p className="stat-card__description">{compatibility.romanceDescription}</p>
         </div>
       </div>

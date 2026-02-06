@@ -1,5 +1,12 @@
-import { questions } from '../data/questions';
-import { results, Result } from '../data/results';
+import { questionScoring } from '../data/questions';
+import { personas, PersonaName } from '../data/personas';
+
+export interface PersonaResult {
+  name: PersonaName;
+  emoji: string;
+  description: string;
+  score: number;
+}
 
 export interface CompatibilityReport {
   overallPercentage: number;
@@ -11,110 +18,142 @@ export interface CompatibilityReport {
   romanceDescription: string;
 }
 
-export function calculateResult(answers: Record<number, 'left' | 'right'>): Result {
-  const scores: Record<string, number> = {};
+export function calculateResult(answers: Record<number, 'left' | 'right'>): PersonaResult {
+  const scores: Partial<Record<PersonaName, number>> = {};
 
-  // Sum scores from all answers
+  // Only count right swipes (like original lovestruck)
   Object.entries(answers).forEach(([qId, choice]) => {
-    const question = questions.find(q => q.id === Number(qId));
-    if (!question) return;
+    if (choice === 'right') {
+      const questionId = Number(qId);
+      const scoring = questionScoring[questionId];
 
-    const option = choice === 'left' ? question.leftOption : question.rightOption;
-    Object.entries(option.scores).forEach(([dimension, value]) => {
-      scores[dimension] = (scores[dimension] || 0) + value;
-    });
-  });
-
-  // Find best-matching result
-  // Calculate match score for each result type
-  const resultScores = results.map(result => {
-    let matchScore = 0;
-    Object.entries(result.minScores).forEach(([dimension, minRequired]) => {
-      const userScore = scores[dimension] || 0;
-      if (userScore >= minRequired) {
-        matchScore += userScore;
+      if (scoring) {
+        Object.entries(scoring).forEach(([persona, points]) => {
+          const personaName = persona as PersonaName;
+          scores[personaName] = (scores[personaName] || 0) + points;
+        });
       }
-    });
-    return { result, matchScore };
+    }
   });
 
-  // Sort by match score and return the best match
-  resultScores.sort((a, b) => b.matchScore - a.matchScore);
+  // Find the persona with the highest score
+  let topPersona: PersonaName = 'The Vibe Checker'; // default
+  let maxScore = 0;
 
-  // Return the best match, or a random result if no matches
-  return resultScores[0].matchScore > 0
-    ? resultScores[0].result
-    : results[Math.floor(Math.random() * results.length)];
+  Object.entries(scores).forEach(([persona, score]) => {
+    if (score > maxScore) {
+      maxScore = score;
+      topPersona = persona as PersonaName;
+    }
+  });
+
+  return {
+    name: topPersona,
+    emoji: personas[topPersona].emoji,
+    description: personas[topPersona].description,
+    score: maxScore,
+  };
+}
+
+// Keywords to categorize questions
+const CHEMISTRY_KEYWORDS = [
+  'communication', 'talk', 'text', 'call', 'respond', 'message', 'reply', 'listen',
+  'argue', 'fight', 'conflict', 'apologize', 'sorry', 'mad', 'angry', 'upset',
+  'friends', 'family', 'social', 'hang out', 'time together', 'space', 'alone time',
+  'honest', 'lie', 'secret', 'trust', 'jealous', 'check', 'phone', 'password'
+];
+
+const ROMANCE_KEYWORDS = [
+  'love', 'romantic', 'date', 'kiss', 'affection', 'cuddle', 'hold hands',
+  'gift', 'surprise', 'gesture', 'flowers', 'valentine', 'anniversary',
+  'compliment', 'praise', 'sweet', 'cute', 'pet name', 'babe', 'baby',
+  'wedding', 'marry', 'future', 'together', 'soulmate', 'heart'
+];
+
+function categorizeQuestion(questionText: string): 'chemistry' | 'romance' | 'both' {
+  const lowerText = questionText.toLowerCase();
+  const hasChemistry = CHEMISTRY_KEYWORDS.some(keyword => lowerText.includes(keyword));
+  const hasRomance = ROMANCE_KEYWORDS.some(keyword => lowerText.includes(keyword));
+
+  if (hasChemistry && hasRomance) return 'both';
+  if (hasChemistry) return 'chemistry';
+  if (hasRomance) return 'romance';
+  return 'both'; // Default to counting for both if unclear
 }
 
 export function calculateCompatibility(
   answers1: Record<number, 'left' | 'right'>,
   answers2: Record<number, 'left' | 'right'>,
   name1: string,
-  name2: string
+  name2: string,
+  questions?: Array<{ id: number; text: string }>
 ): CompatibilityReport {
-  // Calculate how many answers match (same choice on same question)
+  // Calculate overall compatibility (matching answers = compatible)
   let matchingAnswers = 0;
   let totalQuestions = 0;
 
-  // Chemistry: based on communication style alignment (matching on communication-related questions)
+  // Track chemistry and romance specific matches
   let chemistryMatches = 0;
   let chemistryTotal = 0;
-
-  // Romance: based on romance/adventure preferences alignment
   let romanceMatches = 0;
   let romanceTotal = 0;
 
   Object.keys(answers1).forEach(qIdStr => {
     const qId = Number(qIdStr);
-    if (answers2[qId]) {
+    if (answers2[qId] !== undefined) {
       totalQuestions++;
-      const question = questions.find(q => q.id === qId);
+      const matched = answers1[qId] === answers2[qId];
 
-      if (answers1[qId] === answers2[qId]) {
+      if (matched) {
         matchingAnswers++;
       }
 
-      // Categorize questions for chemistry/romance (based on question content)
-      if (question) {
-        const qText = question.text.toLowerCase();
-        // Chemistry questions: communication, listening, dialogue
-        if (qText.includes('communication') || qText.includes('talk') || qText.includes('listen') || qText.includes('share')) {
-          chemistryTotal++;
-          if (answers1[qId] === answers2[qId]) {
-            chemistryMatches++;
+      // Categorize question if we have the questions array
+      if (questions) {
+        const question = questions.find(q => q.id === qId);
+        if (question) {
+          const category = categorizeQuestion(question.text);
+
+          if (category === 'chemistry' || category === 'both') {
+            chemistryTotal++;
+            if (matched) chemistryMatches++;
           }
-        }
-        // Romance questions: love, adventure, romantic, date
-        if (qText.includes('love') || qText.includes('romantic') || qText.includes('date') || qText.includes('adventure')) {
-          romanceTotal++;
-          if (answers1[qId] === answers2[qId]) {
-            romanceMatches++;
+
+          if (category === 'romance' || category === 'both') {
+            romanceTotal++;
+            if (matched) romanceMatches++;
           }
         }
       }
     }
   });
 
-  // Calculate percentages with some randomness for variety (base 65-95%)
+  // Calculate base compatibility (65-98% range)
   const baseCompatibility = totalQuestions > 0
     ? Math.round((matchingAnswers / totalQuestions) * 100)
     : 75;
 
-  // Add some variance to make it more interesting (70-95% range)
-  const overallPercentage = Math.min(98, Math.max(65, baseCompatibility + Math.floor(Math.random() * 20)));
+  const overallPercentage = Math.min(98, Math.max(65, baseCompatibility));
 
-  // Chemistry calculation (base 70-95%)
-  const baseChemistry = chemistryTotal > 0
-    ? Math.round((chemistryMatches / chemistryTotal) * 100)
-    : 80;
-  const chemistryPercentage = Math.min(99, Math.max(70, baseChemistry + Math.floor(Math.random() * 15)));
+  // Calculate chemistry percentage (if we have chemistry questions, use them; otherwise derive from overall)
+  let chemistryPercentage: number;
+  if (chemistryTotal > 0) {
+    const baseChemistry = Math.round((chemistryMatches / chemistryTotal) * 100);
+    chemistryPercentage = Math.min(99, Math.max(70, baseChemistry));
+  } else {
+    // Fallback to overall with slight variance
+    chemistryPercentage = Math.min(99, Math.max(70, overallPercentage + Math.floor(Math.random() * 10) - 5));
+  }
 
-  // Romance calculation (base 70-95%)
-  const baseRomance = romanceTotal > 0
-    ? Math.round((romanceMatches / romanceTotal) * 100)
-    : 80;
-  const romancePercentage = Math.min(99, Math.max(70, baseRomance + Math.floor(Math.random() * 15)));
+  // Calculate romance percentage (if we have romance questions, use them; otherwise derive from overall)
+  let romancePercentage: number;
+  if (romanceTotal > 0) {
+    const baseRomance = Math.round((romanceMatches / romanceTotal) * 100);
+    romancePercentage = Math.min(99, Math.max(70, baseRomance));
+  } else {
+    // Fallback to overall with slight variance
+    romancePercentage = Math.min(99, Math.max(70, overallPercentage + Math.floor(Math.random() * 10) - 5));
+  }
 
   // Determine compatibility level
   let compatibilityLevel: string;
@@ -128,27 +167,39 @@ export function calculateCompatibility(
     compatibilityLevel = 'Compatible';
   }
 
-  // Generate description
-  const descriptions = [
-    `${name1} and ${name2} have incredible chemistry! Your communication styles complement each other beautifully, and you share similar values when it comes to adventure and quality time.`,
-    `${name1} and ${name2} are a wonderful match! You both bring unique strengths to the relationship, and your differences create a beautiful balance.`,
-    `${name1} and ${name2} share a deep connection! Your romantic preferences align perfectly, creating the foundation for lasting love.`,
+  // Generate dynamic description based on actual compatibility
+  const descriptions = overallPercentage >= 85 ? [
+    `${name1} and ${name2} have incredible chemistry! You're aligned on the things that matter most, from how you communicate to what you value in a relationship.`,
+    `${name1} and ${name2} are a wonderful match! You both love and hate the same things, which creates a beautiful foundation for understanding.`,
+    `${name1} and ${name2} share a deep connection! Your dealbreakers and green flags align perfectly, making this relationship feel natural and effortless.`,
+  ] : overallPercentage >= 70 ? [
+    `${name1} and ${name2} have solid compatibility! You agree on most of the important things, with just enough difference to keep things interesting.`,
+    `${name1} and ${name2} are well-matched! Your shared values and boundaries create a strong foundation for growth together.`,
+  ] : [
+    `${name1} and ${name2} have an interesting dynamic! While you have some differences, understanding each other's boundaries could make this work.`,
+    `${name1} and ${name2} bring different perspectives! Your varied approaches to relationships could complement each other with open communication.`,
   ];
   const description = descriptions[Math.floor(Math.random() * descriptions.length)];
 
-  // Chemistry descriptions
-  const chemistryDescriptions = [
+  // Chemistry descriptions based on score
+  const chemistryDescriptions = chemistryPercentage >= 85 ? [
     'You both value open dialogue and active listening',
     'Your communication styles mesh seamlessly',
-    'You understand each other\'s emotional needs',
+    'You handle conflict and connection the same way',
+  ] : [
+    'You have different communication styles that could complement each other',
+    'Understanding each other\'s needs will strengthen your bond',
   ];
   const chemistryDescription = chemistryDescriptions[Math.floor(Math.random() * chemistryDescriptions.length)];
 
-  // Romance descriptions
-  const romanceDescriptions = [
+  // Romance descriptions based on score
+  const romanceDescriptions = romancePercentage >= 85 ? [
     'Your love languages align beautifully',
-    'You share similar romantic ideals',
-    'Your approach to love complements perfectly',
+    'You share similar romantic ideals and expectations',
+    'Your approach to affection and romance matches perfectly',
+  ] : [
+    'You express love differently, creating opportunities to learn from each other',
+    'Your varied romantic styles could bring exciting balance',
   ];
   const romanceDescription = romanceDescriptions[Math.floor(Math.random() * romanceDescriptions.length)];
 

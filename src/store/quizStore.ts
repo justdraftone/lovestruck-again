@@ -1,10 +1,13 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { QuestionSet } from '../data/questions';
 
 interface QuizState {
   mode: 'solo' | 'couples-local' | 'couples-remote' | null;
   currentQuestion: number;
   answers: Record<number, 'left' | 'right'>;
+  questionSet: QuestionSet;
+  selectedQuestionIds: number[];
 
   // Couples mode (local)
   currentPartner: 1 | 2;
@@ -20,6 +23,8 @@ interface QuizState {
 
   // Actions
   setMode: (mode: 'solo' | 'couples-local' | 'couples-remote') => void;
+  setQuestionSet: (set: QuestionSet) => void;
+  setSelectedQuestions: (ids: number[]) => void;
   setLobbyId: (id: string) => void;
   setPartnerId: (id: 1 | 2) => void;
   setPartnerNames: (partner1: string, partner2: string) => void;
@@ -35,6 +40,8 @@ export const useQuizStore = create<QuizState>()(
       mode: null,
       currentQuestion: 0,
       answers: {},
+      questionSet: 'global',
+      selectedQuestionIds: [],
       currentPartner: 1,
       partner1Name: 'Partner 1',
       partner2Name: 'Partner 2',
@@ -45,6 +52,10 @@ export const useQuizStore = create<QuizState>()(
       partnerReady: false,
 
       setMode: (mode) => set({ mode, currentQuestion: 0, answers: {} }),
+
+      setQuestionSet: (questionSet) => set({ questionSet }),
+
+      setSelectedQuestions: (ids) => set({ selectedQuestionIds: ids }),
 
       setLobbyId: (id) => set({ lobbyId: id }),
 
@@ -83,6 +94,7 @@ export const useQuizStore = create<QuizState>()(
         lobbyId: null,
         partnerId: null,
         partnerReady: false,
+        selectedQuestionIds: [],
       }),
     }),
     { name: 'lovestruck-quiz' }

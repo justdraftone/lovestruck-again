@@ -8,12 +8,14 @@ export default function CouplesModeSelect() {
       <div className="container container--couples-mode-select">
 
         <div className="header">
-          <img src="../../public/assets/illos/d1-x-loveorlies.svg" alt="" />
+          <button onClick={() => navigate('/')} className="back-btn">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back
+          </button>
+          <img src="../../public/assets/illos/d1-x-loveorlies.svg" alt="" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} />
         </div>
-
-        <button onClick={() => navigate('/')} className="back-btn">
-          ← Back
-        </button>
 
         <div className="btn-group btn-group--couples-mode-select">
           <button onClick={() => navigate('/couples/together')} className="mode-card">

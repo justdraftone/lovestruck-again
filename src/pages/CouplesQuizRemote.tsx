@@ -1,44 +1,54 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { questions } from '../data/questions';
+import { nigeriaQuestions, globalQuestions, Question } from '../data/questions';
 import { useSwipe } from '../hooks/useSwipe';
 import { useQuizStore } from '../store/quizStore';
+import {
+  createRoom,
+  joinRoom,
+  subscribeToRoom,
+  submitAnswer,
+  unsubscribeFromRoom
+} from '../lib/roomService';
+import { Room } from '../lib/supabase';
+import { RealtimeChannel } from '@supabase/supabase-js';
+
+// Helper function to select random questions
+function selectRandomQuestions(questions: Question[], count: number): Question[] {
+  const shuffled = [...questions].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, count);
+}
 
 type GamePhase = 'waiting' | 'playing' | 'waiting-partner';
-
-// Simulated partner responses (dummy data)
-const simulatePartnerResponse = (questionIndex: number): 'left' | 'right' => {
-  return questionIndex % 2 === 0 ? 'right' : 'left';
-};
-
-const generateRoomCode = () => {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let code = '';
-  for (let i = 0; i < 6; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return code;
-};
 
 export default function CouplesQuizRemote() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { setMode, addAnswer, nextQuestion } = useQuizStore();
+  const {
+    setMode,
+    addAnswer,
+    nextQuestion,
+    questionSet,
+    selectedQuestionIds,
+    setSelectedQuestions
+  } = useQuizStore();
 
   const joinCode = searchParams.get('join');
   const isHost = !joinCode;
 
-  const roomCode = useMemo(() => joinCode || generateRoomCode(), [joinCode]);
+  // Supabase state
+  const [room, setRoom] = useState<Room | null>(null);
+  const [playerId, setPlayerId] = useState<string>('');
+  const [partnerNum, setPartnerNum] = useState<1 | 2>(1);
+  const [channel, setChannel] = useState<RealtimeChannel | null>(null);
+  const [error, setError] = useState<string>('');
 
+  // UI state
   const [phase, setPhase] = useState<GamePhase>(joinCode ? 'playing' : 'waiting');
-  const [playerName] = useState('');
-  const [partnerName, setPartnerName] = useState(joinCode ? 'Host' : '');
-  const [partnerJoined, setPartnerJoined] = useState(!!joinCode);
-  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [playerName] = useState('Player');
+  const [partnerName, setPartnerName] = useState('');
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
   const [isSwiping, setIsSwiping] = useState<'left' | 'right' | null>(null);
-  const [isEntering, setIsEntering] = useState(false);
-  const [isMyTurn, setIsMyTurn] = useState(true);
   const [copied, setCopied] = useState(false);
   const [showExplainer, setShowExplainer] = useState(() => {
     const hasSeenExplainer = localStorage.getItem('hasSeenExplainer');
@@ -46,20 +56,107 @@ export default function CouplesQuizRemote() {
   });
   const [isExplainerExiting, setIsExplainerExiting] = useState(false);
 
+  // Derived state from room
+  const currentQuestion = room?.current_question || 0;
+  const isMyTurn = room?.current_turn === partnerNum;
+  const partnerJoined = room?.status === 'playing' || room?.status === 'finished';
+  const roomCode = room?.code || '';
+
+  // Select questions based on question set
+  const questions = useMemo(() => {
+    const sourceQuestions = questionSet === 'nigeria' ? nigeriaQuestions : globalQuestions;
+
+    // If we already have selected question IDs, use those
+    if (selectedQuestionIds.length > 0) {
+      return sourceQuestions.filter(q => selectedQuestionIds.includes(q.id));
+    }
+
+    // Otherwise, select 7 random questions
+    const selected = selectRandomQuestions(sourceQuestions, 7);
+    setSelectedQuestions(selected.map(q => q.id));
+    return selected;
+  }, [questionSet, selectedQuestionIds, setSelectedQuestions]);
+
   useEffect(() => {
     setMode('couples-remote');
   }, [setMode]);
 
-  // Simulate partner joining after 2 seconds for host
+  // Initialize room (create or join)
   useEffect(() => {
-    if (isHost && !partnerJoined) {
-      const timer = setTimeout(() => {
-        setPartnerName('Your Partner');
-        setPartnerJoined(true);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [isHost, partnerJoined]);
+    const initRoom = async () => {
+      if (isHost) {
+        // Host creates a new room
+        const result = await createRoom(playerName);
+        if (result) {
+          setRoom(result.room);
+          setPlayerId(result.playerId);
+          setPartnerNum(1);
+          // Store room ID for potential reconnection
+          localStorage.setItem('currentRoomId', result.room.id);
+          localStorage.setItem('currentPlayerId', result.playerId);
+        } else {
+          setError('Failed to create room. Please check your Supabase configuration.');
+        }
+      } else if (joinCode) {
+        // Joiner joins existing room
+        const result = await joinRoom(joinCode, playerName);
+        if (result) {
+          setRoom(result.room);
+          setPlayerId(result.playerId);
+          setPartnerNum(result.partnerNum);
+          setPartnerName(result.room.partner1_name);
+          setPhase('playing');
+          // Store room ID for potential reconnection
+          localStorage.setItem('currentRoomId', result.room.id);
+          localStorage.setItem('currentPlayerId', result.playerId);
+        } else {
+          setError('Failed to join room. Please check the room code.');
+        }
+      }
+    };
+
+    initRoom();
+  }, [isHost, joinCode, playerName]);
+
+  // Subscribe to room updates
+  useEffect(() => {
+    if (!room?.id) return;
+
+    const subscription = subscribeToRoom(room.id, (updatedRoom) => {
+      setRoom(updatedRoom);
+
+      // Update partner name when they join
+      if (isHost && updatedRoom.partner2_name && !partnerName) {
+        setPartnerName(updatedRoom.partner2_name);
+      }
+
+      // Navigate to results when game is finished
+      if (updatedRoom.status === 'finished') {
+        // Small delay to show the last question
+        setTimeout(() => {
+          navigate('/results/couples-remote');
+        }, 1000);
+      }
+    });
+
+    setChannel(subscription);
+
+    // Cleanup subscription on unmount
+    return () => {
+      if (subscription) {
+        unsubscribeFromRoom(subscription);
+      }
+    };
+  }, [room?.id, isHost, partnerName, navigate]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (channel) {
+        unsubscribeFromRoom(channel);
+      }
+    };
+  }, [channel]);
 
   const dismissExplainer = () => {
     setIsExplainerExiting(true);
@@ -72,10 +169,7 @@ export default function CouplesQuizRemote() {
 
   const handleStartGame = () => {
     setPhase('playing');
-    setIsMyTurn(true);
   };
-
-  const lobbyLink = `${window.location.origin}/couples/remote?join=${roomCode}`;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(lobbyLink);
@@ -105,67 +199,116 @@ export default function CouplesQuizRemote() {
 
   const processSwipe = (direction: 'left' | 'right') => {
     if (!isMyTurn || swipeDirection || showExplainer) return;
+
+    // Add both classes immediately like the original
     setIsSwiping(direction);
+    setSwipeDirection(direction);
+
+    // Wait for transition to complete (400ms transform + some buffer)
     setTimeout(() => {
-      setSwipeDirection(direction);
       setIsSwiping(null);
-    }, 150);
-    // Wait for card to fully disappear (150ms delay + 350ms CSS transition)
-    setTimeout(() => {
-      addAnswer(currentQuestion, direction);
-      processAnswer();
-    }, 500);
+      processAnswer(direction);
+    }, 450);
   };
 
   const handleSwipeLeft = () => processSwipe('left');
   const handleSwipeRight = () => processSwipe('right');
 
-  const processAnswer = () => {
-    setIsMyTurn(false);
+  const processAnswer = async (direction: 'left' | 'right') => {
+    if (!room?.id) return;
+
     setPhase('waiting-partner');
 
-    // Simulate partner answering after 1.5 seconds
-    setTimeout(() => {
-      simulatePartnerResponse(currentQuestion);
+    // Submit answer to Supabase
+    const success = await submitAnswer(
+      room.id,
+      partnerNum,
+      currentQuestion,
+      direction,
+      questions.length
+    );
 
+    if (success) {
+      // Add to local store for UI consistency
+      addAnswer(currentQuestion, direction);
+      nextQuestion();
+
+      // Reset swipe direction after a delay
       setTimeout(() => {
-        if (currentQuestion + 1 >= questions.length) {
-          // Store dummy results for display
-          sessionStorage.setItem('remoteResults', JSON.stringify({
-            partner1Name: isHost ? playerName : partnerName,
-            partner2Name: isHost ? partnerName : playerName,
-            partner1Answers: {},
-            partner2Answers: {},
-          }));
-          navigate('/results/couples-remote');
-        } else {
-          setCurrentQuestion(prev => prev + 1);
-          nextQuestion();
-          setSwipeDirection(null);
-          setPhase('playing');
-          setIsMyTurn(true);
-          setIsEntering(true);
-          setTimeout(() => setIsEntering(false), 250);
-        }
+        setSwipeDirection(null);
       }, 500);
-    }, 1500);
+
+      // The room update will come via real-time subscription
+      // which will update isMyTurn and currentQuestion automatically
+      setPhase('playing');
+    } else {
+      setError('Failed to submit answer. Please try again.');
+      setPhase('playing');
+    }
   };
 
   useSwipe({ onSwipeLeft: handleSwipeLeft, onSwipeRight: handleSwipeRight });
+
+  const lobbyLink = roomCode ? `${window.location.origin}/couples/remote?join=${roomCode}` : '';
+
+  // Show error if room creation/joining failed
+  if (error) {
+    return (
+      <div className="page page--centered gradient-love">
+        <div className="header">
+          <button className="back-btn" onClick={() => navigate('/couples')}>
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back
+          </button>
+          <img src="/assets/illos/d1-x-loveorlies.svg" alt="" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} />
+        </div>
+
+        <div className="remote-invite">
+          <div className="remote-invite__card">
+            <h2 className="remote-invite__title">⚠️ Error</h2>
+            <p className="remote-invite__subtitle" style={{ color: '#ff4444' }}>{error}</p>
+            <button
+              onClick={() => navigate('/couples')}
+              className="btn btn--primary btn-homepage"
+              style={{ marginTop: '24px' }}
+            >
+              Go Back
+            </button>
+          </div>
+        </div>
+        <div className="highlight-glow"></div>
+      </div>
+    );
+  }
+
+  // Show loading while initializing room
+  if (!room) {
+    return (
+      <div className="page page--centered gradient-love">
+        <div className="results-loader">
+          <div className="results-loader__spinner"></div>
+          <p className="results-loader__text">
+            {isHost ? 'Creating room...' : 'Joining room...'}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   // Waiting for Partner Phase
   if (phase === 'waiting') {
     return (
       <div className="page page--centered gradient-love">
-        <button className="back-btn" onClick={() => navigate('/couples')}>
-          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          Back
-        </button>
-
         <div className="header">
-          <img src="/assets/illos/d1-x-loveorlies.svg" alt="" />
+          <button className="back-btn" onClick={() => navigate('/couples')}>
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back
+          </button>
+          <img src="/assets/illos/d1-x-loveorlies.svg" alt="" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} />
         </div>
 
         <div className="remote-invite">
@@ -237,21 +380,28 @@ export default function CouplesQuizRemote() {
   }
 
   // Playing Phase - uses same visual as solo quiz
-  const question = questions[currentQuestion];
   const progress = ((currentQuestion + 1) / questions.length) * 100;
-  const cardVariant = (currentQuestion % 4) + 1;
+
+  // Pre-render upcoming cards for deck effect
+  const upcomingCards = [0, 1, 2].map(offset => {
+    const questionIndex = currentQuestion + offset;
+    if (questionIndex >= questions.length) return null;
+    return {
+      question: questions[questionIndex],
+      variant: (questionIndex % 4) + 1,
+      isTop: offset === 0
+    };
+  }).filter(Boolean);
 
   return (
     <div className="page gradient-love">
       <div className="header">
-        <img src="/assets/illos/d1-x-loveorlies.svg" alt="" />
-        <div className={`turn-indicator ${isMyTurn ? 'turn-indicator--active' : 'turn-indicator--waiting'}`}>
-          {phase === 'waiting-partner' ? (
-            <p>Waiting for {partnerName}...</p>
-          ) : (
+        <img src="/assets/illos/d1-x-loveorlies.svg" alt="" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} />
+        {isMyTurn && (
+          <div className="turn-indicator turn-indicator--active">
             <p>Your turn!</p>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       <div id="swipe-area" className="swipe-area">
@@ -267,70 +417,56 @@ export default function CouplesQuizRemote() {
         </button>
 
         <div className="card-stack">
-          {[...Array(Math.min(3, questions.length - currentQuestion - 1))].map((_, i) => {
-            const stackIndex = i + 1;
+          {upcomingCards.map((card, index) => {
+            if (!card) return null;
+
             return (
               <div
-                key={`stack-${stackIndex}`}
-                className="quiz-card quiz-card--stack"
-                style={{
-                  transform: `translateY(${stackIndex * 8}px) scale(${1 - stackIndex * 0.03})`,
-                  zIndex: 10 - stackIndex,
-                  opacity: 1 - stackIndex * 0.15,
-                }}
-              />
+                key={`question-${currentQuestion + index}`}
+                className={`quiz-card quiz-card--variant-${card.variant} ${
+                  index === 0 && swipeDirection === 'left' ? 'quiz-card--swipe-left' :
+                  index === 0 && swipeDirection === 'right' ? 'quiz-card--swipe-right' :
+                  index === 0 && isSwiping === 'left' ? 'quiz-card--swiping-left' :
+                  index === 0 && isSwiping === 'right' ? 'quiz-card--swiping-right' : ''
+                } ${index === 0 && !isMyTurn ? 'quiz-card--dimmed' : ''}`}
+              >
+                <div className="card-content">
+                  <div className="emoji-icon">{card.question.emoji}</div>
+                  <h2 className="question-text">{card.question.text}</h2>
+
+                  {index === 0 && (
+                    <div className="answer-group answer-group--yn">
+                      <button
+                        onClick={handleSwipeLeft}
+                        className={`answer-btn answer-btn--icon ${!isMyTurn ? 'answer-btn--disabled' : ''}`}
+                        disabled={!isMyTurn}
+                        aria-label="No"
+                      >
+                        <svg className="icon icon--red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={handleSwipeRight}
+                        className={`answer-btn answer-btn--icon ${!isMyTurn ? 'answer-btn--disabled' : ''}`}
+                        disabled={!isMyTurn}
+                        aria-label="Yes"
+                      >
+                        <svg className="icon icon--green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="card-brand">
+                    <img src="../../public/assets/illos/d1-x-loveorlies-card.svg" alt="" />
+                  </div>
+                </div>
+
+              </div>
             );
           })}
-
-          <div
-            className={`quiz-card quiz-card--variant-${cardVariant} ${
-              swipeDirection === 'left' ? 'quiz-card--swipe-left' :
-              swipeDirection === 'right' ? 'quiz-card--swipe-right' :
-              isSwiping === 'left' ? 'quiz-card--swiping-left' :
-              isSwiping === 'right' ? 'quiz-card--swiping-right' : ''
-            } ${isEntering ? 'quiz-card--entering' : ''} ${!isMyTurn ? 'quiz-card--dimmed' : ''}`}
-            style={{ zIndex: 15 }}
-          >
-            <div className="card-content">
-              <div className="emoji-icon">🎵</div>
-              <h2 className="question-text">{question.text}</h2>
-
-              <div className="answer-group answer-group--yn">
-                <button
-                  onClick={handleSwipeLeft}
-                  className={`answer-btn answer-btn--icon ${!isMyTurn ? 'answer-btn--disabled' : ''}`}
-                  disabled={!isMyTurn}
-                  aria-label="No"
-                >
-                  <svg className="icon icon--red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-                <button
-                  onClick={handleSwipeRight}
-                  className={`answer-btn answer-btn--icon ${!isMyTurn ? 'answer-btn--disabled' : ''}`}
-                  disabled={!isMyTurn}
-                  aria-label="Yes"
-                >
-                  <svg className="icon icon--green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                  </svg>
-                </button>
-              </div>
-
-              <div className="card-brand">
-                <img src="../../public/assets/illos/d1-x-loveorlies-card.svg" alt="" />
-              </div>
-            </div>
-
-            {!isMyTurn && (
-              <div className="waiting-overlay">
-                <div className="waiting-overlay__message">
-                  <p>Waiting for {partnerName}...</p>
-                </div>
-              </div>
-            )}
-          </div>
         </div>
 
         <button
@@ -365,7 +501,7 @@ export default function CouplesQuizRemote() {
               </button>
 
               <img src="/assets/icons/swipe-right.svg" alt="swipe right" />
-              <p>Swipe/Tap red for No.</p>
+              <p>Tap X if it's a dealbreaker for you</p>
             </div>
 
             <button onClick={dismissExplainer} className="explainer__btn btn btn--primary">
@@ -380,8 +516,24 @@ export default function CouplesQuizRemote() {
               </button>
 
               <img src="/assets/icons/swipe-left.svg" alt="swipe left" />
-              <p>Swipe/Tap green for Yes.</p>
+              <p>Tap green if you're cool with it</p>
             </div>
+          </div>
+        </div>
+      )}
+
+      {!isMyTurn && (
+        <div className="waiting-screen">
+          <div className="waiting-screen__backdrop" />
+          <div className="waiting-screen__content">
+            <p className="waiting-screen__text">
+              Waiting for your partner
+              <span className="loading-dots">
+                <span>.</span>
+                <span>.</span>
+                <span>.</span>
+              </span>
+            </p>
           </div>
         </div>
       )}

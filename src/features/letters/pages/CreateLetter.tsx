@@ -5,8 +5,19 @@ import { useLetterStore } from '../store/letterStore';
 export default function CreateLetter() {
   const navigate = useNavigate();
   const { createLetter } = useLetterStore();
+  const [recipientName, setRecipientName] = useState('');
+  const [senderName, setSenderName] = useState('');
   const [content, setContent] = useState('');
   const [image, setImage] = useState<string | undefined>();
+  const [imagePosition, setImagePosition] = useState({ x: 200, y: 200 });
+  const [imageSize, setImageSize] = useState({ width: 200, height: 200 });
+  const [imageRotation, setImageRotation] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+  const [isRotating, setIsRotating] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [resizeStart, setResizeStart] = useState({ width: 0, height: 0, x: 0, y: 0 });
+  const [rotateStart, setRotateStart] = useState({ angle: 0, x: 0, y: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -22,14 +33,78 @@ export default function CreateLetter() {
 
   const handleRemoveImage = () => {
     setImage(undefined);
+    setImagePosition({ x: 200, y: 200 });
+    setImageSize({ width: 200, height: 200 });
+    setImageRotation(0);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
 
+  const handleImageMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsDragging(true);
+    setDragOffset({
+      x: e.clientX - imagePosition.x,
+      y: e.clientY - imagePosition.y
+    });
+  };
+
+  const handleResizeMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsResizing(true);
+    setResizeStart({
+      width: imageSize.width,
+      height: imageSize.height,
+      x: e.clientX,
+      y: e.clientY
+    });
+  };
+
+  const handleRotateMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsRotating(true);
+    const centerX = imagePosition.x + imageSize.width / 2;
+    const centerY = imagePosition.y + imageSize.height / 2;
+    const angle = Math.atan2(e.clientY - centerY, e.clientX - centerX) * 180 / Math.PI;
+    setRotateStart({ angle: angle - imageRotation, x: centerX, y: centerY });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (isDragging) {
+      setImagePosition({
+        x: e.clientX - dragOffset.x,
+        y: e.clientY - dragOffset.y
+      });
+    } else if (isResizing) {
+      const deltaX = e.clientX - resizeStart.x;
+      const deltaY = e.clientY - resizeStart.y;
+      const delta = Math.max(deltaX, deltaY);
+      setImageSize({
+        width: Math.max(50, resizeStart.width + delta),
+        height: Math.max(50, resizeStart.height + delta)
+      });
+    } else if (isRotating) {
+      const angle = Math.atan2(e.clientY - rotateStart.y, e.clientX - rotateStart.x) * 180 / Math.PI;
+      setImageRotation(angle - rotateStart.angle);
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+    setIsResizing(false);
+    setIsRotating(false);
+  };
+
   const handleDone = () => {
     if (!content.trim()) return;
-    const letterId = createLetter(content.trim(), image);
+    const imageData = image ? {
+      src: image,
+      position: imagePosition,
+      size: imageSize,
+      rotation: imageRotation
+    } : undefined;
+    const letterId = createLetter(content.trim(), recipientName.trim(), senderName.trim(), imageData);
     navigate(`/letters/send/${letterId}`);
   };
 
@@ -37,7 +112,7 @@ export default function CreateLetter() {
     <div className="page gradient-love">
       <div className="letter-create">
         <div className="letter-create__header">
-          <img src="/assets/illos/d1-x-loveorlies.svg" alt="draftone x love or lies" />
+          <img src="/assets/illos/d1-x-loveorlies.svg" alt="draftone x love or lies" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} />
           <div className="letter-create__actions">
             <button
               onClick={() => fileInputRef.current?.click()}
@@ -65,9 +140,19 @@ export default function CreateLetter() {
           style={{ display: 'none' }}
         />
 
-        <div className="letter-create__card">
+        <div className="letter-create__card" onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}>
           <div className="letter-create__content">
-            <h2 className="letter-create__greeting">Dear xxxx,</h2>
+            <h2 className="letter-create__greeting">
+              Dear{' '}
+              <input
+                type="text"
+                className="letter-create__line-input"
+                placeholder="name"
+                value={recipientName}
+                onChange={(e) => setRecipientName(e.target.value)}
+              />
+              ,
+            </h2>
             <textarea
               className="letter-create__textarea"
               placeholder="Write your beautiful letter here..."
@@ -75,10 +160,52 @@ export default function CreateLetter() {
               onChange={(e) => setContent(e.target.value)}
               rows={8}
             />
+            <p className="letter-create__signature">
+              Love,{' '}
+              <input
+                type="text"
+                className="letter-create__line-input"
+                placeholder="your name"
+                value={senderName}
+                onChange={(e) => setSenderName(e.target.value)}
+              />
+            </p>
 
             {image && (
-              <div className="letter-create__image-preview">
-                <img src={image} alt="Attached" />
+              <div
+                className="letter-create__image-preview"
+                style={{
+                  position: 'absolute',
+                  left: `${imagePosition.x}px`,
+                  top: `${imagePosition.y}px`,
+                  width: `${imageSize.width}px`,
+                  height: `${imageSize.height}px`,
+                  transform: `rotate(${imageRotation}deg)`,
+                  cursor: isDragging ? 'grabbing' : 'grab'
+                }}
+                onMouseDown={handleImageMouseDown}
+              >
+                <img src={image} alt="Attached" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+
+                {/* Resize handle */}
+                <div
+                  className="letter-create__resize-handle"
+                  onMouseDown={handleResizeMouseDown}
+                  style={{ cursor: 'nwse-resize' }}
+                />
+
+                {/* Rotate handle */}
+                <div
+                  className="letter-create__rotate-handle"
+                  onMouseDown={handleRotateMouseDown}
+                  style={{ cursor: 'grab' }}
+                >
+                  <svg width="16" height="16" fill="none" stroke="white" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </div>
+
+                {/* Remove button */}
                 <button
                   onClick={handleRemoveImage}
                   className="letter-create__image-remove"
@@ -92,13 +219,6 @@ export default function CreateLetter() {
             )}
           </div>
         </div>
-      </div>
-
-      <div className="letter-create__decoration letter-create__decoration--left">
-        <img src="/assets/illos/polaroid.svg" alt="" />
-      </div>
-      <div className="letter-create__decoration letter-create__decoration--right">
-        <img src="/assets/illos/letters-floating-img.svg" alt="" />
       </div>
 
       <div className="highlight-glow"></div>

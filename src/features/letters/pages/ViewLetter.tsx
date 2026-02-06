@@ -48,7 +48,7 @@ export default function ViewLetter() {
     <div className="page page--centered gradient-love">
 
         <div className="letter-view__header">
-          <img src="/assets/illos/d1-x-loveorlies.svg" alt="draftone x love or lies" />
+          <img src="/assets/illos/d1-x-loveorlies.svg" alt="draftone x love or lies" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} />
           <button
             onClick={() => navigate('/letters/create')}
             className="btn btn--primary btn-homepage"
@@ -64,7 +64,7 @@ export default function ViewLetter() {
             <div className="envelope envelope--front" onClick={handleFlip}>
               <div className="envelope__label">
                 <span className="envelope__to">To:</span>
-                <span className="envelope__name">{letter.recipientName}</span>
+                <span className="envelope__name">{letter.recipientName || '____'}</span>
               </div>
               <p className="envelope__hint">Click to Flip</p>
             </div>
@@ -87,11 +87,26 @@ export default function ViewLetter() {
           {viewState === 'open' && (
             <div className="letter-content">
               <div className="letter-paper letter-paper--open">
-                <h2 className="letter-paper__greeting">Dear {letter.recipientName},</h2>
+                <h2 className="letter-paper__greeting">
+                  Dear {letter.recipientName || '____'},
+                </h2>
                 <p className="letter-paper__content">{letter.content}</p>
+                <p className="letter-paper__signature">
+                  Love, {letter.senderName || '____'}
+                </p>
                 {letter.image && (
-                  <div className="letter-paper__image">
-                    <img src={letter.image} alt="Attached" />
+                  <div
+                    className="letter-paper__image"
+                    style={{
+                      position: 'absolute',
+                      left: `${letter.image.position.x}px`,
+                      top: `${letter.image.position.y}px`,
+                      width: `${letter.image.size.width}px`,
+                      height: `${letter.image.size.height}px`,
+                      transform: `rotate(${letter.image.rotation}deg)`
+                    }}
+                  >
+                    <img src={letter.image.src} alt="Attached" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </div>
                 )}
               </div>
@@ -109,13 +124,6 @@ export default function ViewLetter() {
             </button> */}
           </div>
         )}
-
-        <div className="letter-view__decoration letter-view__decoration--left">
-          <img src="/assets/illos/polaroid.svg" alt="" />
-        </div>
-        <div className="letter-view__decoration letter-view__decoration--right">
-          <img src="/assets/illos/letters-floating-img.svg" alt="" />
-        </div>
       </div>
       <div className="highlight-glow"></div>
     </div>

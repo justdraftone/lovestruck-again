@@ -37,7 +37,7 @@ export default function OpenLetter() {
   return (
     <div className="page page--centered gradient-love">
       <div className="letter-open">
-        <div className="letter-send__header">
+        <div className="letter-send__header" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
           <img src="/assets/illos/d1-x-loveorlies.svg" alt="draftone x love or lies" />
         </div>
 

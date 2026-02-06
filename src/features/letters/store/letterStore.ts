@@ -1,11 +1,19 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+export interface ImageData {
+  src: string;
+  position: { x: number; y: number };
+  size: { width: number; height: number };
+  rotation: number;
+}
+
 export interface Letter {
   id: string;
   recipientName: string;
+  senderName: string;
   content: string;
-  image?: string;
+  image?: ImageData;
   createdAt: number;
 }
 
@@ -14,7 +22,7 @@ interface LetterStore {
   currentLetter: Letter | null;
 
   // Actions
-  createLetter: (content: string, image?: string) => string;
+  createLetter: (content: string, recipientName: string, senderName: string, image?: ImageData) => string;
   setRecipientName: (id: string, name: string) => void;
   getLetter: (id: string) => Letter | null;
   setCurrentLetter: (letter: Letter | null) => void;
@@ -37,11 +45,12 @@ export const useLetterStore = create<LetterStore>()(
       letters: {},
       currentLetter: null,
 
-      createLetter: (content: string, image?: string) => {
+      createLetter: (content: string, recipientName: string, senderName: string, image?: ImageData) => {
         const id = generateLetterId();
         const letter: Letter = {
           id,
-          recipientName: '',
+          recipientName,
+          senderName,
           content,
           image,
           createdAt: Date.now(),
