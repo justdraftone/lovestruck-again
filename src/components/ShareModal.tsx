@@ -14,7 +14,7 @@ export default function ShareModal({ isOpen, onClose, result }: ShareModalProps)
   const navigate = useNavigate();
 
   // Debug controls
-  const [debugMode, setDebugMode] = useState(true);
+  // const [debugMode] = useState(true);
   const [descFontSize, setDescFontSize] = useState(0.8875);
   const [descLineHeight, setDescLineHeight] = useState(1.5);
   const [descMarginTop, setDescMarginTop] = useState(-55);
@@ -166,7 +166,7 @@ export default function ShareModal({ isOpen, onClose, result }: ShareModalProps)
           </svg>
         </button>
 
-        {debugMode && (
+        {/* {debugMode && (
           <div className="share-modal__debug" onClick={(e) => e.stopPropagation()}>
             <div className="share-modal__debug-header">
               <h3>Debug Controls</h3>
@@ -243,7 +243,7 @@ export default function ShareModal({ isOpen, onClose, result }: ShareModalProps)
               </label>
             </div>
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );

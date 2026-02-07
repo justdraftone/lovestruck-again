@@ -7,7 +7,7 @@ export default function CouplesModeSelect() {
     <div className="page page--centered gradient-love">
       <div className="container container--couples-mode-select">
 
-        <div className="header">
+        <div className="header header__couples-quiz">
           <button onClick={() => navigate('/')} className="back-btn">
             <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />

@@ -6,9 +6,9 @@ import { nigeriaQuestions, globalQuestions } from '../data/questions';
 import ResultCard from '../components/ResultCard';
 import ShareModal from '../components/ShareModal';
 import CouplesResults from '../components/CouplesResults';
+import ValentinesCardCta from '../components/ValentinesCardCta';
 import { supabase } from '../lib/supabase';
 import { PersonaName, personas } from '../data/personas';
-import { personaVisuals } from '../data/results';
 
 export default function Results() {
   const navigate = useNavigate();
@@ -115,7 +115,7 @@ export default function Results() {
     return (
       <div className="page page--centered gradient-love" style={{ padding: '48px 24px' }}>
 
-        <div className="header">
+        <div className="header header__results">
           <img src="/assets/illos/d1-x-loveorlies.svg" alt="" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} />
         </div>
 
@@ -137,14 +137,7 @@ export default function Results() {
               </button>
             </div>
 
-          <a href="/letters" className="cta-card-link">
-            <div className="cta-card">
-              <img src="/assets/illos/heart-envelope.svg" alt="" className="cta-card__emoji" />
-              <p className="cta-card__title">Create a Valentine's Card</p>
-              <p className="cta-card__desc">Send a love letter to your special someone</p>
-              <span className="cta-card__btn">Create Now →</span>
-            </div>
-          </a>
+          <ValentinesCardCta hideOnScroll />
         </div>
 
         <div className='highlight-glow highlight-glow--results'></div>
@@ -168,6 +161,7 @@ export default function Results() {
                   <ResultCard
                     result={{
                       name: selectedPairing,
+                      emoji: pairingData?.emoji || '❤️',
                       description: pairDescription,
                       score: 0
                     }}

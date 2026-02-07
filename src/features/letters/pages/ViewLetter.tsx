@@ -49,12 +49,6 @@ export default function ViewLetter() {
 
         <div className="letter-view__header">
           <img src="/assets/illos/d1-x-loveorlies.svg" alt="draftone x love or lies" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} />
-          <button
-            onClick={() => navigate('/letters/create')}
-            className="btn btn--primary btn-homepage"
-          >
-            Write a letter
-          </button>
         </div>
       <div className="letter-view">
 
@@ -122,6 +116,12 @@ export default function ViewLetter() {
             >
               Write a Reply
             </button> */}
+            <button
+              onClick={() => navigate('/letters/create')}
+              className="btn btn--primary btn-homepage"
+            >
+              Write a letter
+            </button>
           </div>
         )}
       </div>

@@ -13,7 +13,6 @@ import {
   OpenLetter,
   ViewLetter
 } from './features/letters'
-import { Agentation } from 'agentation'
 
 function App() {
   return (
@@ -34,7 +33,6 @@ function App() {
         <Route path="/letters/open" element={<OpenLetter />} />
         <Route path="/letters/view/:letterId" element={<ViewLetter />} />
       </Routes>
-      {import.meta.env.MODE === 'development' && <Agentation />}
     </BrowserRouter>
   )
 }

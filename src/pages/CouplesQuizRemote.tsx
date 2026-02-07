@@ -38,7 +38,7 @@ export default function CouplesQuizRemote() {
 
   // Supabase state
   const [room, setRoom] = useState<Room | null>(null);
-  const [playerId, setPlayerId] = useState<string>('');
+  const [, setPlayerId] = useState<string>('');
   const [partnerNum, setPartnerNum] = useState<1 | 2>(1);
   const [channel, setChannel] = useState<RealtimeChannel | null>(null);
   const [error, setError] = useState<string>('');

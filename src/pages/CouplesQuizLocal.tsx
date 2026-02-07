@@ -95,8 +95,8 @@ export default function CouplesQuizLocal() {
   if (!namesSet) {
     return (
       <div className="page page--centered gradient-love">
-
-      <div className="header">
+      
+      <div className="header header__couples-quiz header__couples-solo-lobby">
         <button onClick={() => navigate('/couples')} className="back-btn">
           <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -138,6 +138,8 @@ export default function CouplesQuizLocal() {
             Start Quiz Together
           </button>
         </div>
+      <div className='highlight-glow highlight-glow--results'></div>
+
       </div>
     );
   }
@@ -184,7 +186,7 @@ export default function CouplesQuizLocal() {
 
   return (
     <div className="page gradient-love">
-      <div className="header">
+      <div className="header header__couples-quiz-w-toggle">
         <img src="../../public/assets/illos/d1-x-loveorlies.svg" alt="" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} />
         <div className="question-set-toggle">
           <button
@@ -195,10 +197,10 @@ export default function CouplesQuizLocal() {
             {questionSet === 'nigeria' ? '🇳🇬 Nigeria' : '🌍 Global'}
           </button>
         </div>
+        <p className="header__turn">{currentPartnerName}'{currentPartnerName.charAt(currentPartnerName.length-1) == 's'? '': 's'} Turn!</p>
       </div>
 
     {/* <div className='couples-quiz-container'> */}
-        <p className="header__turn">{currentPartnerName}'{currentPartnerName.charAt(currentPartnerName.length-1) == 's'? '': 's'} Turn!</p>
 
         <div id="swipe-area" className="swipe-area">
           <button onClick={handleSwipeLeftSafe} className="fab fab--left" aria-label="Dealbreaker">
@@ -248,8 +250,6 @@ export default function CouplesQuizLocal() {
               );
             })}
           </div>
-          
-          <div className='highlight-glow'></div>
 
           <button onClick={handleSwipeRightSafe} className="fab fab--right" aria-label="Cool with it">
             <svg className="icon icon--green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -258,13 +258,15 @@ export default function CouplesQuizLocal() {
           </button>
         </div>
 
-        <div className="progress">
+        <div className="progress card-stack__progress-couples">
           <div className="progress__track">
             <div className="progress__fill" style={{ width: `${progress}%` }} />
           </div>
         </div>
-    {/* </div> */}
 
+    {/* </div> */}
+      <div className='highlight-glow'></div>
+      
 
       {showExplainer && (
         <div className={`explainer ${isExplainerExiting ? 'explainer--exiting' : ''}`}>
@@ -301,5 +303,6 @@ export default function CouplesQuizLocal() {
         </div>
       )}
     </div>
+    
   );
 }

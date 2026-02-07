@@ -190,7 +190,7 @@ html {
     padding-top: 120px; // Add space for fixed header and back button
   }
   &--main-homepage {
-    overflow-Y: visible;
+    overflow-Y: hidden;
   }
 }
 
@@ -774,17 +774,18 @@ html {
 
 // Header - Reusable system with fixed positioning
 .header {
-  position: fixed;
-  top: 48px;
-  left: 0;
-  right: 0;
+  // position: fixed;
+  // top: 48px;
+  // left: 0;
+  // right: 0;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   padding: 16px 0;
   z-index: 100;
   background: transparent;
   pointer-events: none;
+  width:75%;
 
   // Make children interactive
   > * {
@@ -795,35 +796,44 @@ html {
   > img {
     max-width: 250px;
     height: auto;
-    margin: 0;
+    margin: 0 auto;
     margin-top: 16px;
   }
 
   // Back button - fixed position, closer to content
   .back-btn {
     position: fixed;
-    left: 24px;
+    align-self:flex-start;
+    // left: 24px;
     top: 180px;
     margin: 0;
     z-index: 101;
   }
 
-  &__brand {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 8px;
+  &__quiz{
+    position: absolute;
+    top: 48px;
+    left: 0;
+    right: 0;
+    flex-direction:column;
+    left:50%;
+    transform: translateX(-50%);
+    &-couples-results{
+      position:static;
+      transform: none;
+    }
   }
-
-  &__logo {
-    color: white;
-    font-weight: 700;
-    font-size: 1.25rem;
-    letter-spacing: 0.05em;
+  
+  &__couples-quiz{
+    width:100%; 
   }
-
-  &__divider {
-    color: rgba(255, 255, 255, 0.6);
+  &__couples-quiz-w-toggle{ 
+    flex-direction:column;
+    margin: 0 auto;
+    max-height:160px;
+  }
+  &__couples-solo-lobby{
+    width:75%;
   }
 
   &__tagline {
@@ -832,18 +842,18 @@ html {
     font-style: italic;
   }
 
-  &__results {
-    position: absolute;
-    top: 24px;
-    left: 50%;
-    transform: translateX(-50%);
+  // &__results {
+  //   position: absolute;
+  //   top: 24px;
+  //   left: 50%;
+  //   transform: translateX(-50%);
 
-    img {
-      max-width: 200px;
-      opacity: 0;
-      animation: fadeInDown 0.6s ease-out 0.2s forwards;
-    }
-  }
+  //   img {
+  //     max-width: 200px;
+  //     opacity: 0;
+  //     animation: fadeInDown 0.6s ease-out 0.2s forwards;
+  //   }
+  // }
 
   &__turn {
     // font-weight: 700;
@@ -853,13 +863,13 @@ html {
     border-radius:32px;
     color: white;
     margin:8px auto 8px auto;
-    margin-top: 4rem;
+    // margin-top: 4rem;
     padding: 8px 16px 8px 16px;
   }
-  &__couples-form{
-    position:absolute;
-    top:128px;
-  }
+  // &__couples-form{
+  //   position:absolute;
+  //   top:128px;
+  // }
 }
 
 .highlight-glow{
@@ -871,7 +881,7 @@ html {
     background: #FAC47F;
     border-radius:100%;
     filter: blur(120px);
-    z-index: 8;
+    z-index: 0;
     &--results{
       // position:absolute;
       z-index: 0;
@@ -931,6 +941,9 @@ html {
 
   &__couples{
     margin-top:-32px;
+  }
+  &__progress-couples{
+    bottom: 80px !important;
   }
 }
 
@@ -1296,6 +1309,7 @@ html {
     display:flex;
     flex-direction: column;
     cursor:default;
+    z-index:99
   }
 }
 
@@ -1720,14 +1734,14 @@ html {
 
 // Result Card Component
 .result-card {
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 8px 16px rgba(0, 0, 0, 0.2), inset 0 0 0 4px #FFFFFF50;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 8px 16px rgba(0, 0, 0, 0.2), inset 0 0 0 8px #FFFFFF50;
   padding: 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap:4px;
   position: relative;
-  overflow-x: visible;
+  overflow-x: hidden;
   overflow-y: hidden;
   border-radius: 48px;
   opacity: 0;
@@ -1749,6 +1763,7 @@ html {
                 0 8px 16px rgba(0, 0, 0, 0.2),
                 inset 0 0 0 8px #FFFFFF80;
     max-width: 520px;
+    border-radius: 48px !important;
 
     .result-card__desc--large {
       font-size: var(--desc-font-size, 0.8875rem);
@@ -2953,7 +2968,7 @@ html {
     background: linear-gradient(180deg, #FCF6C6 0%, #FFE887 100%);
     box-shadow: $shadow-2xl;
     box-shadow: inset -8px -8px 10px 0px #00000030, 
-                inset 0 0 0 6px #FFFFFF;
+                inset 0 0 0 8px #FFFFFF;
     border-radius: 48px;
     padding: 48px 32px;
     width: 560px;
@@ -3423,7 +3438,7 @@ html {
   background: linear-gradient(180deg, #8B9FE8 0%, #B088D4 50%, #E8A0C8 100%);
   border-radius: 48px;
   box-shadow: $shadow-2xl,
-              inset 0 0 0 4px rgba(255, 255, 255, 0.25);
+              inset 0 0 0 8px rgba(255, 255, 255, 0.25);
   padding: 48px 24px 64px;
   text-align: center;
   position: relative;
@@ -3548,7 +3563,7 @@ html {
   border-radius: 32px;
   padding: 24px 20px;
   box-shadow: $shadow-lg,
-              inset 0 0 0 4px rgba(255, 255, 255, 0.75),
+              inset 0 0 0 8px rgba(255, 255, 255, 0.75),
               inset -8px -8px 10px 0px #00000030;
 
   &--chemistry {
@@ -3625,6 +3640,14 @@ html {
 
   &--flipping {
     animation: cardFlip 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .result-card{
+    .result-card__cloud{
+      width:280%;
+      left: -50%;
+      transform: translateX(0%);
+      bottom:-50%;
+    }
   }
 }
 
@@ -4146,8 +4169,42 @@ html {
 // Tablet (portrait and landscape)
 @media (max-width: 768px) and (min-width: 481px) {
   .header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 16px 0;
+    z-index: 100;
+    background: transparent;
+    pointer-events: none;
+    width:75%;
+
     > img {
       max-width: 220px;
+    }
+
+    &__couples-quiz{
+      position: absolute;
+      top: 48px;
+      left: 0;
+      right: 0;
+      flex-direction:column;
+      left:50%;
+      transform: translateX(-50%);
+      &-couples-results{
+        position:static;
+        transform: none;
+      }
+    }
+    &__quiz-couples-results {
+      padding: 24px 12px;
+
+      &__actions {
+        flex-direction: column;
+      }
+
+      &__btn:last-child {
+        width: 100%;
+      }
     }
   }
 
@@ -4197,6 +4254,50 @@ html {
     > img {
       max-width: 160px;
       margin-top: 4px;
+    }
+  }
+  .header {
+    display: flex;
+    flex-direction: row !important;
+    align-items: center;
+    padding: 16px;
+    z-index: 100;
+    background: transparent;
+    pointer-events: none;
+    width:100%;
+
+    button{
+      position:static !important;
+    }
+
+    > img {
+      position:absolute;
+      left:50%;
+      transform:translateX(-50%)
+      // max-width: 220px;
+    }
+
+    &__couples-quiz{
+      position: absolute;
+      top: 48px;
+      left: 0;
+      right: 0;
+      flex-direction:column;
+      left:50%;
+      transform: translateX(-50%);
+      &-couples-results{
+        position:static;
+        transform: none;
+      }
+    }
+
+    &__couples-quiz-w-toggle{
+      flex-direction:column !important;
+      img{
+        position:static;
+        margin:auto;
+        transform:none;
+      }
     }
   }
 
@@ -4264,6 +4365,7 @@ html {
     padding: 28px 20px;
     border-radius: 28px;
     margin: 0 auto;
+    top:128px;
   }
 
   .card-stack {
@@ -4360,8 +4462,7 @@ html {
   // Turn indicator
   .header__turn {
     font-size: 0.9rem;
-    margin-top: 80px;
-    padding: 0 16px;
+    margin-top: 32px;
   }
 
   // Results page
@@ -4372,17 +4473,20 @@ html {
 
   .result-card {
     padding: 24px 16px;
-    border-radius: 28px;
+    border-radius: 48px;
     max-width: 100%;
     width: 100%;
+    overflow:hidden;
+
 
     &--large {
       padding: 32px 20px 28px;
       max-width: 100%;
+      gap:10px;
     }
 
     &__name--large {
-      font-size: 1.75rem;
+      font-size: 2rem;
       line-height: 1.2;
     }
 
@@ -4395,11 +4499,18 @@ html {
       font-size: 0.75rem;
       line-height: 1.5;
       padding: 0 8px;
+      margin-top:-20px;
     }
 
     &__compatibility {
       padding: 12px 16px;
       gap: 4px;
+    }
+    &__cloud{
+      bottom:-60%;
+      width:400%;
+      left:-50%;
+      transform:translateX(-50%);
     }
 
     &__compatibility-type {
@@ -4419,32 +4530,37 @@ html {
   }
 
   .compatibility-card {
-    padding: 24px 16px;
-    border-radius: 32px;
+    padding: 64px 16px;
+    border-radius: 48px;
 
     &__percentage {
       font-size: 3.5rem;
     }
     &__cloud{
-      width: 320%;
+      width: 280%;
+      bottom:-50%;
     }
-  }
+    &__description {
+      padding: 56px 8px 0;
+    }
+    &__description-result {
+      margin:0 !important;
+      padding: 8px 8px 32px 8px;
+      font-size: 0.75rem !important;
+      font-weight:400;
+    }
+    &__names {
+      font-family: "Rosindale", "Rosindale Italic Bold", serif;
+    }
+    &--shareable {
+      min-width:0;
+    }
+}
 
   .compatibility-stats {
     flex-direction: column;
   }
 
-  .couples-results {
-    padding: 24px 12px;
-
-    &__actions {
-      flex-direction: column;
-    }
-
-    &__btn:last-child {
-      width: 100%;
-    }
-  }
 
   // Valentine's CTA card
   .cta-card {
@@ -4483,11 +4599,12 @@ html {
   }
 
   .heart--6 {
-    position: relative !important;
-    top: auto !important;
-    right: auto !important;
+    position: fixed !important;
+    top: -64px !important;
+    right: -48px !important;
     bottom: auto !important;
     left: auto !important;
+    transform: rotate(15deg) !important;
   }
 
   .results-bottom {
@@ -4503,6 +4620,13 @@ html {
   // Mode selection cards
   .mode-card {
     padding: 24px 20px;
+    width: calc(100% - 32px);
+
+    img{
+      // display:none;
+      width:80px;
+      height:80px;
+    }
 
     &__title {
       font-size: 1.5rem;
@@ -4557,7 +4681,7 @@ html {
 
   .letter-open__card {
     width: 100%;
-    padding: 32px 20px;
+    // padding: 32px 20px;
   }
 
   .envelope {
@@ -4629,7 +4753,7 @@ html {
       gap: 32px;
       top: 0;
       margin-top: 100px;
-      flex-direction: column;
+      flex-direction: row;
       max-width: 90%;
       margin-left: auto;
       margin-right: auto;
@@ -4678,6 +4802,37 @@ html {
     &__card-wrapper {
       max-width: 100%;
     }
+    .result-card {
+      &--shareable {
+        padding: 28px 64px 64px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3),
+                    0 8px 16px rgba(0, 0, 0, 0.2),
+                    inset 0 0 0 8px #FFFFFF80;
+        max-width: 520px;
+
+        .result-card__desc--large {
+          font-size:.75rem;
+          line-height: var(--desc-line-height, 1.5);
+          margin-top: var(--desc-margin-top, -55px);
+          margin-bottom:32px;
+          width:150%;
+        }
+
+        .result-card__image--large {
+          width: 200px;
+          height: 200px;
+        }
+
+        .result-card__name--large {
+          font-size: 2rem;
+        }
+        .result-card__cloud{
+          bottom:-50%;
+          left:-50%;
+          transform:translateX(-50%)
+        }
+      }
+    }
   }
 
   // Ensure all touch targets are at least 44x44px
@@ -4691,8 +4846,11 @@ html {
 
   .letter-send {
     &__header {
+      top:64px;
+      padding-bottom:64px;
       img {
         max-width: 180px;
+        // width:100%;
       }
     }
 
@@ -4728,7 +4886,7 @@ html {
 
   .letter-open {
     &__card {
-      padding: 32px 20px;
+      // padding: 32px 20px;
     }
 
     &__title {
@@ -4739,7 +4897,7 @@ html {
   .letter-view {
     &__header {
       padding: 24px 16px 0;
-      position: relative;
+      position: absolute;
       top: 48px;
       width: 100%;
       flex-direction: column;
@@ -4760,12 +4918,14 @@ html {
     padding: 16px;
 
     &__header {
-      padding: 24px 16px 0;
+      padding: 24px;
       flex-direction: column;
       gap: 12px;
+      width:100%;
+      margin-bottom:24px;
 
       img {
-        height: 40px;
+        width: 200px;
       }
     }
 
@@ -4776,11 +4936,14 @@ html {
 
     &__action-btn {
       padding: 16px;
+      border-radius:32px;
+      height:100%;
     }
 
     &__done-btn {
       padding: 16px 32px;
       font-size: 0.875rem;
+      height:100%;
     }
 
     &__card {
@@ -4818,12 +4981,12 @@ html {
     &__header {
       padding: 24px 0 0 0;
     }
-    &__action-btn{
-      padding:18px;
-    }
-    &__done-btn{
-      padding: 18px 36px;
-    }
+    // &__action-btn{
+    //   padding:18px;
+    // }
+    // &__done-btn{
+    //   padding: 18px 36px;
+    // }
   }
 }
 

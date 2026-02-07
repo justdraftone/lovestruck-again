@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useQuizStore } from '../store/quizStore';
 import BlurImage from '../components/BlurImage';
+import ValentinesCardCta from '../components/ValentinesCardCta';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -32,14 +33,7 @@ export default function Home() {
       <BlurImage src="/assets/illos/heart-red.svg" alt="" className="heart heart--3 heart--animate heart--animate-delay-2" />
       <BlurImage src="/assets/illos/heart-red.svg" alt="" className="heart heart--4 flip-h heart--animate heart--animate-delay-1" />
       <BlurImage src="/assets/illos/heart-gold.svg" alt="" className="heart heart--5 flip-h heart--animate heart--animate-delay-2" />
-      <a href="/letters" className="heart heart--6 heart--animate letter-cta-floating">
-        <div className="cta-card cta-card--floating">
-          <img src="/assets/results/heart-ball-1.png" alt="" className="cta-card__heart" />
-          <h2 className="cta-card__heading">Create a<br/>Valentine's Card!</h2>
-          <p className="cta-card__desc">Create beautiful letters for your<br/>friends and loved ones!</p>
-          <span className="cta-card__btn">Create a Letter</span>
-        </div>
-      </a>
+      <ValentinesCardCta variant="floating" animated />
       <BlurImage src="/assets/illos/heart-gold.svg" alt="" className="heart heart--7 heart--animate heart--animate-delay-1" />
 
 
