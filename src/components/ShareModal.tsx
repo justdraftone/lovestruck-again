@@ -13,22 +13,23 @@ export default function ShareModal({ isOpen, onClose, result }: ShareModalProps)
   const cardRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  // Debug controls
+  // Debug controls (unused but kept for future debugging)
   // const [debugMode] = useState(true);
-  const [descFontSize, setDescFontSize] = useState(0.8875);
-  const [descLineHeight, setDescLineHeight] = useState(1.5);
-  const [descMarginTop, setDescMarginTop] = useState(-55);
-  const [descMarginBottom, setDescMarginBottom] = useState(16);
-  const [logoBottom, setLogoBottom] = useState(34);
-  const [logoOpacity, setLogoOpacity] = useState(0.4);
-  const [logoMaxWidth, setLogoMaxWidth] = useState(115);
-  const [logoGrayscale, setLogoGrayscale] = useState(0);
-  const [cardPaddingTop, setCardPaddingTop] = useState(28);
-  const [cardPaddingBottom, setCardPaddingBottom] = useState(92);
-  const [cardPaddingSide, setCardPaddingSide] = useState(60);
-  const [imageSize, setImageSize] = useState(300);
-  const [titleSize, setTitleSize] = useState(3.4);
+  const [descFontSize] = useState(0.8875);
+  const [descLineHeight] = useState(1.5);
+  const [descMarginTop] = useState(-55);
+  const [descMarginBottom] = useState(16);
+  const [logoBottom] = useState(34);
+  const [logoOpacity] = useState(0.4);
+  const [logoMaxWidth] = useState(115);
+  const [logoGrayscale] = useState(0);
+  const [cardPaddingTop] = useState(28);
+  const [cardPaddingBottom] = useState(92);
+  const [cardPaddingSide] = useState(60);
+  const [imageSize] = useState(300);
+  const [titleSize] = useState(3.4);
 
+  // @ts-ignore - debug function used in commented code
   const copyCSS = () => {
     const css = `
 // Share Card Styling

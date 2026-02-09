@@ -401,6 +401,13 @@ html {
   justify-content: space-between;
   height: 100%;
   padding: 48px 32px 32px;
+  transition: filter 0.3s ease;
+
+  &--blurred {
+    filter: blur(12px);
+    user-select: none;
+    pointer-events: none;
+  }
 }
 
 // Typography
@@ -489,6 +496,15 @@ html {
 
   &:hover {
     transform: scale(1.025);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+
+    &:hover {
+      transform: none;
+    }
   }
 
   &--primary {
@@ -832,6 +848,11 @@ html {
     margin: 0 auto;
     max-height:160px;
   }
+  &__couples-quiz-remote{
+    width:75%;
+    position:absolute;
+    top:64px;
+  }
   &__couples-solo-lobby{
     width:75%;
   }
@@ -967,6 +988,10 @@ html {
     height: 100%;
     border-radius: $radius-full;
     transition: width 0.3s ease;
+  }
+
+  &__couples-quiz-remote{
+    bottom:64px;
   }
 }
 
@@ -1617,6 +1642,7 @@ html {
     font-weight: 600;
     color: white;
     text-align: center;
+    z-index:109;
   }
 }
 
@@ -4677,7 +4703,14 @@ html {
       flex-direction: column;
       margin: 32px auto;
     }
+    &__decoration--right {
+      top: -15%;
+    }
+    &__decoration--left {
+      bottom: -5%;
+    }
   }
+  
 
   .letter-open__card {
     width: 100%;

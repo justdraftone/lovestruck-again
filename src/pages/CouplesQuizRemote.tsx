@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { nigeriaQuestions, globalQuestions, Question } from '../data/questions';
 import { useSwipe } from '../hooks/useSwipe';
@@ -45,6 +45,19 @@ export default function CouplesQuizRemote() {
 
   // UI state
   const [phase, setPhase] = useState<GamePhase>(joinCode ? 'playing' : 'waiting');
+  const phaseRef = useRef<GamePhase>(phase);
+  const partnerNumRef = useRef<1 | 2>(partnerNum);
+  const [displayQuestion, setDisplayQuestion] = useState(0);
+
+  // Keep refs in sync with state
+  useEffect(() => {
+    phaseRef.current = phase;
+  }, [phase]);
+
+  useEffect(() => {
+    partnerNumRef.current = partnerNum;
+  }, [partnerNum]);
+
   const [playerName] = useState('Player');
   const [partnerName, setPartnerName] = useState('');
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
@@ -57,10 +70,20 @@ export default function CouplesQuizRemote() {
   const [isExplainerExiting, setIsExplainerExiting] = useState(false);
 
   // Derived state from room
-  const currentQuestion = room?.current_question || 0;
   const isMyTurn = room?.current_turn === partnerNum;
   const partnerJoined = room?.status === 'playing' || room?.status === 'finished';
   const roomCode = room?.code || '';
+
+  // Debug logging
+  useEffect(() => {
+    console.log('[CouplesRemote] State:', {
+      partnerNum,
+      currentTurn: room?.current_turn,
+      isMyTurn,
+      phase,
+      isHost
+    });
+  }, [partnerNum, room?.current_turn, isMyTurn, phase, isHost]);
 
   // Select questions based on question set
   const questions = useMemo(() => {
@@ -91,6 +114,7 @@ export default function CouplesQuizRemote() {
           setRoom(result.room);
           setPlayerId(result.playerId);
           setPartnerNum(1);
+          setDisplayQuestion(result.room.current_question);
           // Store room ID for potential reconnection
           localStorage.setItem('currentRoomId', result.room.id);
           localStorage.setItem('currentPlayerId', result.playerId);
@@ -105,7 +129,13 @@ export default function CouplesQuizRemote() {
           setPlayerId(result.playerId);
           setPartnerNum(result.partnerNum);
           setPartnerName(result.room.partner1_name);
-          setPhase('playing');
+          setDisplayQuestion(result.room.current_question);
+          // Set phase based on whether it's the guest's turn
+          if (result.room.current_turn === result.partnerNum) {
+            setPhase('playing');
+          } else {
+            setPhase('waiting-partner');
+          }
           // Store room ID for potential reconnection
           localStorage.setItem('currentRoomId', result.room.id);
           localStorage.setItem('currentPlayerId', result.playerId);
@@ -122,12 +152,30 @@ export default function CouplesQuizRemote() {
   useEffect(() => {
     if (!room?.id) return;
 
+    console.log('[Realtime] Subscribing to room:', room.id);
+
     const subscription = subscribeToRoom(room.id, (updatedRoom) => {
+      console.log('[Realtime] Room updated:', updatedRoom);
       setRoom(updatedRoom);
 
-      // Update partner name when they join
-      if (isHost && updatedRoom.partner2_name && !partnerName) {
+      // Update partner name when they join (for host)
+      if (updatedRoom.partner2_name) {
+        console.log('[Realtime] Partner joined:', updatedRoom.partner2_name);
         setPartnerName(updatedRoom.partner2_name);
+        // Transition from waiting to playing when partner joins
+        if (phaseRef.current === 'waiting') {
+          console.log('[Realtime] Transitioning to playing phase');
+          setPhase('playing');
+        }
+      }
+
+      // When it's my turn again after partner answered, update display and phase
+      if (updatedRoom.current_turn === partnerNumRef.current && phaseRef.current === 'waiting-partner') {
+        setDisplayQuestion(updatedRoom.current_question);
+        nextQuestion();
+        setSwipeDirection(null);
+        setIsSwiping(null);
+        setPhase('playing');
       }
 
       // Navigate to results when game is finished
@@ -143,11 +191,12 @@ export default function CouplesQuizRemote() {
 
     // Cleanup subscription on unmount
     return () => {
+      console.log('[Realtime] Cleaning up subscription');
       if (subscription) {
         unsubscribeFromRoom(subscription);
       }
     };
-  }, [room?.id, isHost, partnerName, navigate]);
+  }, [room?.id]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -198,17 +247,18 @@ export default function CouplesQuizRemote() {
   };
 
   const processSwipe = (direction: 'left' | 'right') => {
-    if (!isMyTurn || swipeDirection || showExplainer) return;
+    if (!isMyTurn || swipeDirection || showExplainer || phase === 'waiting-partner') return;
 
-    // Add both classes immediately like the original
+    // Add both classes immediately
     setIsSwiping(direction);
     setSwipeDirection(direction);
 
-    // Wait for transition to complete (400ms transform + some buffer)
+    // Wait for transition to complete, then show waiting overlay
     setTimeout(() => {
       setIsSwiping(null);
+      setPhase('waiting-partner');
       processAnswer(direction);
-    }, 450);
+    }, 500);
   };
 
   const handleSwipeLeft = () => processSwipe('left');
@@ -217,32 +267,27 @@ export default function CouplesQuizRemote() {
   const processAnswer = async (direction: 'left' | 'right') => {
     if (!room?.id) return;
 
-    setPhase('waiting-partner');
-
-    // Submit answer to Supabase
+    // Submit answer to Supabase (use displayQuestion which is what the player is seeing)
     const success = await submitAnswer(
       room.id,
       partnerNum,
-      currentQuestion,
+      displayQuestion,
       direction,
       questions.length
     );
 
     if (success) {
-      // Add to local store for UI consistency
-      addAnswer(currentQuestion, direction);
-      nextQuestion();
+      // Add to local store for records
+      addAnswer(displayQuestion, direction);
 
-      // Reset swipe direction after a delay
-      setTimeout(() => {
-        setSwipeDirection(null);
-      }, 500);
+      // DON'T call nextQuestion() here - let the real-time update handle it
+      // This prevents the card from resetting
 
-      // The room update will come via real-time subscription
-      // which will update isMyTurn and currentQuestion automatically
-      setPhase('playing');
+      // Stay in waiting-partner phase until real-time update arrives
+      // Don't reset swipeDirection - keep card hidden until turn changes
     } else {
       setError('Failed to submit answer. Please try again.');
+      setSwipeDirection(null);
       setPhase('playing');
     }
   };
@@ -255,7 +300,7 @@ export default function CouplesQuizRemote() {
   if (error) {
     return (
       <div className="page page--centered gradient-love">
-        <div className="header">
+        <div className="header header__couples-quiz-remote">
           <button className="back-btn" onClick={() => navigate('/couples')}>
             <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -267,7 +312,7 @@ export default function CouplesQuizRemote() {
 
         <div className="remote-invite">
           <div className="remote-invite__card">
-            <h2 className="remote-invite__title">⚠️ Error</h2>
+            <h2 className="remote-invite__title">Error</h2>
             <p className="remote-invite__subtitle" style={{ color: '#ff4444' }}>{error}</p>
             <button
               onClick={() => navigate('/couples')}
@@ -283,8 +328,8 @@ export default function CouplesQuizRemote() {
     );
   }
 
-  // Show loading while initializing room
-  if (!room) {
+  // Show loading while initializing room or waiting for partner number
+  if (!room || (!isHost && partnerNum === 1)) {
     return (
       <div className="page page--centered gradient-love">
         <div className="results-loader">
@@ -301,7 +346,16 @@ export default function CouplesQuizRemote() {
   if (phase === 'waiting') {
     return (
       <div className="page page--centered gradient-love">
-        <div className="header">
+        <div className="header header__couples-quiz-remote">
+          <button onClick={() => navigate('/')} className="back-btn">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back
+          </button>
+          <img src="../../public/assets/illos/d1-x-loveorlies.svg" alt="" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} />
+        </div>
+        {/* <div className="header header">
           <button className="back-btn" onClick={() => navigate('/couples')}>
             <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -309,7 +363,7 @@ export default function CouplesQuizRemote() {
             Back
           </button>
           <img src="/assets/illos/d1-x-loveorlies.svg" alt="" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} />
-        </div>
+        </div> */}
 
         <div className="remote-invite">
           <div className="remote-invite__card">
@@ -380,11 +434,11 @@ export default function CouplesQuizRemote() {
   }
 
   // Playing Phase - uses same visual as solo quiz
-  const progress = ((currentQuestion + 1) / questions.length) * 100;
+  const progress = ((displayQuestion + 1) / questions.length) * 100;
 
-  // Pre-render upcoming cards for deck effect
+  // Pre-render upcoming cards for deck effect (use displayQuestion for rendering)
   const upcomingCards = [0, 1, 2].map(offset => {
-    const questionIndex = currentQuestion + offset;
+    const questionIndex = displayQuestion + offset;
     if (questionIndex >= questions.length) return null;
     return {
       question: questions[questionIndex],
@@ -393,9 +447,19 @@ export default function CouplesQuizRemote() {
     };
   }).filter(Boolean);
 
+  // Check if we should hide card content (when waiting or swiping)
+  const hideCardContent = phase === 'waiting-partner' || isSwiping || swipeDirection;
+
   return (
     <div className="page gradient-love">
-      <div className="header">
+      <div
+        className="header header__couples-quiz-w-toggle"
+        style={{
+          ...((!isMyTurn && !showExplainer) ? { width: '100%' } : {}),
+          position: 'relative',
+          zIndex: 200
+        }}
+      >
         <img src="/assets/illos/d1-x-loveorlies.svg" alt="" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} />
         {isMyTurn && (
           <div className="turn-indicator turn-indicator--active">
@@ -422,19 +486,23 @@ export default function CouplesQuizRemote() {
 
             return (
               <div
-                key={`question-${currentQuestion + index}`}
+                key={`question-${displayQuestion + index}`}
                 className={`quiz-card quiz-card--variant-${card.variant} ${
                   index === 0 && swipeDirection === 'left' ? 'quiz-card--swipe-left' :
                   index === 0 && swipeDirection === 'right' ? 'quiz-card--swipe-right' :
                   index === 0 && isSwiping === 'left' ? 'quiz-card--swiping-left' :
                   index === 0 && isSwiping === 'right' ? 'quiz-card--swiping-right' : ''
-                } ${index === 0 && !isMyTurn ? 'quiz-card--dimmed' : ''}`}
+                } ${index === 0 && !isMyTurn ? 'quiz-card--dimmed' : ''} ${partnerNum === 2 ? 'flip-h' : ''}`}
               >
                 <div className="card-content">
-                  <div className="emoji-icon">{card.question.emoji}</div>
-                  <h2 className="question-text">{card.question.text}</h2>
+                  {!hideCardContent && (
+                    <>
+                      <div className="emoji-icon">{card.question.emoji}</div>
+                      <h2 className="question-text">{card.question.text}</h2>
+                    </>
+                  )}
 
-                  {index === 0 && (
+                  {index === 0 && !hideCardContent && (
                     <div className="answer-group answer-group--yn">
                       <button
                         onClick={handleSwipeLeft}
@@ -459,9 +527,11 @@ export default function CouplesQuizRemote() {
                     </div>
                   )}
 
-                  <div className="card-brand">
-                    <img src="../../public/assets/illos/d1-x-loveorlies-card.svg" alt="" />
-                  </div>
+                  {!hideCardContent && (
+                    <div className="card-brand">
+                      <img src="../../public/assets/illos/d1-x-loveorlies-card.svg" alt="" />
+                    </div>
+                  )}
                 </div>
 
               </div>
@@ -481,7 +551,7 @@ export default function CouplesQuizRemote() {
         </button>
       </div>
 
-      <div className="progress">
+      <div className="progress progress__couples-quiz-remote">
         <div className="progress__track">
           <div className="progress__fill" style={{ width: `${progress}%` }} />
         </div>

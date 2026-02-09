@@ -145,9 +145,12 @@ export async function submitAnswer(
 
   // Determine next turn and question
   const nextTurn = partnerNum === 1 ? 2 : 1;
-  const isLastQuestion = questionIndex >= totalQuestions - 1;
-  const nextQuestion = isLastQuestion ? questionIndex : questionIndex + 1;
-  const newStatus = isLastQuestion && partnerNum === 2 ? 'finished' : room.status;
+
+  // Always increment question after someone answers
+  const nextQuestion = questionIndex + 1;
+
+  // Game is finished when we've gone through all questions
+  const newStatus = nextQuestion >= totalQuestions ? 'finished' : room.status;
 
   const { error } = await supabase
     .from('rooms')
