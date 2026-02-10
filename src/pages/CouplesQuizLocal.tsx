@@ -36,12 +36,6 @@ export default function CouplesQuizLocal() {
   const [showExplainer, setShowExplainer] = useState(false);
   const [isExplainerExiting, setIsExplainerExiting] = useState(false);
 
-  // Debug controls
-  const [showDebug, setShowDebug] = useState(true);
-  const [instructionFontSize, setInstructionFontSize] = useState(1);
-  const [instructionMarginBottom, setInstructionMarginBottom] = useState(100);
-  const [instructionMarginTop, setInstructionMarginTop] = useState(-112);
-
   // Select questions based on question set
   const questions = useMemo(() => {
     const sourceQuestions = questionSet === 'nigeria' ? nigeriaQuestions : globalQuestions;
@@ -273,7 +267,7 @@ export default function CouplesQuizLocal() {
           <div className="explainer__backdrop" onClick={dismissExplainer} />
           <div className="explainer__content" style={{ flexDirection: 'column' }}>
 
-            <div style={{ width: '100%', marginTop: `${instructionMarginTop}px`, marginBottom: `${instructionMarginBottom}px`, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+            <div style={{ width: '100%', marginTop: '-112px', marginBottom: '100px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
               <div style={{
                 fontSize: '1rem',
                 fontWeight: 'bold',
@@ -284,7 +278,7 @@ export default function CouplesQuizLocal() {
               }}>
                 {partner1Name || 'Partner 1'}'s Turn
               </div>
-              <p style={{ color: 'white', fontSize: `${instructionFontSize}rem`, textAlign: 'center', lineHeight: '1.2', margin: 0, display: 'block', width: '100%', fontWeight: 500, letterSpacing: '-0.02em' }}>
+              <p style={{ color: 'white', fontSize: '1rem', textAlign: 'center', lineHeight: '1.2', margin: 0, display: 'block', width: '100%', fontWeight: 500, letterSpacing: '-0.02em' }}>
                 Take turns answering each question
               </p>
             </div>
@@ -321,66 +315,6 @@ export default function CouplesQuizLocal() {
         </div>
       )}
 
-      {showDebug && namesSet && (
-        <div style={{
-          position: 'fixed',
-          bottom: 20,
-          left: 20,
-          right: 20,
-          background: 'rgba(0,0,0,0.9)',
-          padding: '20px',
-          borderRadius: '12px',
-          zIndex: 10000,
-          maxHeight: '70vh',
-          overflow: 'auto',
-          color: 'white',
-          fontSize: '14px'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
-            <h3 style={{ margin: 0 }}>Instruction Modal Debug</h3>
-            <button onClick={() => setShowDebug(false)} style={{ background: '#ff4444', border: 'none', padding: '5px 10px', borderRadius: '6px', color: 'white', cursor: 'pointer' }}>
-              Hide
-            </button>
-          </div>
-
-          <div style={{ marginBottom: '15px' }}>
-            <label style={{ display: 'block', marginBottom: '5px' }}>Instruction Margin Top: {instructionMarginTop}px</label>
-            <input type="range" min="-200" max="200" value={instructionMarginTop} onChange={(e) => setInstructionMarginTop(Number(e.target.value))} style={{ width: '100%' }} />
-          </div>
-
-          <div style={{ marginBottom: '15px' }}>
-            <label style={{ display: 'block', marginBottom: '5px' }}>Instruction Margin Bottom: {instructionMarginBottom}px</label>
-            <input type="range" min="0" max="100" value={instructionMarginBottom} onChange={(e) => setInstructionMarginBottom(Number(e.target.value))} style={{ width: '100%' }} />
-          </div>
-
-          <div style={{ marginBottom: '15px' }}>
-            <label style={{ display: 'block', marginBottom: '5px' }}>Instruction Font Size: {instructionFontSize}rem</label>
-            <input type="range" min="0.5" max="3" step="0.1" value={instructionFontSize} onChange={(e) => setInstructionFontSize(Number(e.target.value))} style={{ width: '100%' }} />
-          </div>
-
-          <button onClick={() => setShowExplainer(true)} style={{ width: '100%', padding: '12px', background: '#4CAF50', border: 'none', borderRadius: '8px', color: 'white', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold', marginTop: '10px' }}>
-            Show Modal Again
-          </button>
-        </div>
-      )}
-
-      {!showDebug && namesSet && (
-        <button onClick={() => setShowDebug(true)} style={{
-          position: 'fixed',
-          bottom: 20,
-          right: 20,
-          background: 'rgba(0,0,0,0.7)',
-          border: 'none',
-          padding: '10px 15px',
-          borderRadius: '8px',
-          color: 'white',
-          cursor: 'pointer',
-          zIndex: 10000,
-          fontSize: '14px'
-        }}>
-          Show Debug
-        </button>
-      )}
     </div>
 
   );
