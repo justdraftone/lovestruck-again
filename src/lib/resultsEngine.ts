@@ -70,6 +70,22 @@ const ROMANCE_KEYWORDS = [
   'wedding', 'marry', 'future', 'together', 'soulmate', 'heart'
 ];
 
+// Red flag keywords - questions where "yes" indicates concerning behavior
+const RED_FLAG_KEYWORDS = [
+  'jealous', 'check your phone', 'control', 'track', 'location', 'password',
+  'go through', 'secretly', 'lie', 'cheat', 'flirt with', 'ghost', 'ignore',
+  'yell', 'explosive', 'silent treatment', 'manipulate', 'guilt trip'
+];
+
+// Green flag keywords - questions where "yes" indicates healthy behavior
+const GREEN_FLAG_KEYWORDS = [
+  'support', 'encourage', 'respect', 'boundaries', 'communicate', 'listen',
+  'apologize', 'compromise', 'quality time', 'celebrate', 'trust',
+  'honest', 'vulnerable', 'grow together', 'independent'
+];
+
+type QuestionPolarity = 'red-flag' | 'green-flag' | 'neutral';
+
 function categorizeQuestion(questionText: string): 'chemistry' | 'romance' | 'both' {
   const lowerText = questionText.toLowerCase();
   const hasChemistry = CHEMISTRY_KEYWORDS.some(keyword => lowerText.includes(keyword));
@@ -81,6 +97,42 @@ function categorizeQuestion(questionText: string): 'chemistry' | 'romance' | 'bo
   return 'both'; // Default to counting for both if unclear
 }
 
+function getQuestionPolarity(questionText: string): QuestionPolarity {
+  const lowerText = questionText.toLowerCase();
+  const hasRedFlag = RED_FLAG_KEYWORDS.some(keyword => lowerText.includes(keyword));
+  const hasGreenFlag = GREEN_FLAG_KEYWORDS.some(keyword => lowerText.includes(keyword));
+
+  if (hasRedFlag) return 'red-flag';
+  if (hasGreenFlag) return 'green-flag';
+  return 'neutral';
+}
+
+function calculateQuestionScore(
+  answer1: 'left' | 'right',
+  answer2: 'left' | 'right',
+  polarity: QuestionPolarity
+): number {
+  const bothYes = answer1 === 'right' && answer2 === 'right';
+  const bothNo = answer1 === 'left' && answer2 === 'left';
+  const mismatch = answer1 !== answer2;
+
+  if (polarity === 'red-flag') {
+    // Red flag questions: Both saying "no" is great, both "yes" is bad
+    if (bothNo) return 1.5; // Extra points for both rejecting red flags
+    if (bothYes) return 0.3; // Low score for both accepting red flags
+    return 0; // Mismatch on red flags is a big issue
+  } else if (polarity === 'green-flag') {
+    // Green flag questions: Both saying "yes" is great, both "no" is concerning
+    if (bothYes) return 1.5; // Extra points for both embracing green flags
+    if (bothNo) return 0.5; // Lower score for both rejecting healthy behaviors
+    return 0.7; // Mismatch is okay, one person can lead by example
+  } else {
+    // Neutral questions: Just matching preferences
+    if (bothYes || bothNo) return 1.0; // Standard match
+    return 0.5; // Slight credit for different preferences (can complement)
+  }
+}
+
 export function calculateCompatibility(
   answers1: Record<number, 'left' | 'right'>,
   answers2: Record<number, 'left' | 'right'>,
@@ -88,67 +140,72 @@ export function calculateCompatibility(
   name2: string,
   questions?: Array<{ id: number; text: string }>
 ): CompatibilityReport {
-  // Calculate overall compatibility (matching answers = compatible)
-  let matchingAnswers = 0;
-  let totalQuestions = 0;
+  // Calculate weighted compatibility scores
+  let totalScore = 0;
+  let maxPossibleScore = 0;
 
-  // Track chemistry and romance specific matches
-  let chemistryMatches = 0;
-  let chemistryTotal = 0;
-  let romanceMatches = 0;
-  let romanceTotal = 0;
+  // Track chemistry and romance specific scores
+  let chemistryScore = 0;
+  let chemistryMaxScore = 0;
+  let romanceScore = 0;
+  let romanceMaxScore = 0;
 
   Object.keys(answers1).forEach(qIdStr => {
     const qId = Number(qIdStr);
     if (answers2[qId] !== undefined) {
-      totalQuestions++;
-      const matched = answers1[qId] === answers2[qId];
+      let polarity: QuestionPolarity = 'neutral';
+      let category: 'chemistry' | 'romance' | 'both' = 'both';
 
-      if (matched) {
-        matchingAnswers++;
-      }
-
-      // Categorize question if we have the questions array
+      // Get question metadata if available
       if (questions) {
         const question = questions.find(q => q.id === qId);
         if (question) {
-          const category = categorizeQuestion(question.text);
-
-          if (category === 'chemistry' || category === 'both') {
-            chemistryTotal++;
-            if (matched) chemistryMatches++;
-          }
-
-          if (category === 'romance' || category === 'both') {
-            romanceTotal++;
-            if (matched) romanceMatches++;
-          }
+          polarity = getQuestionPolarity(question.text);
+          category = categorizeQuestion(question.text);
         }
+      }
+
+      // Calculate weighted score for this question
+      const questionScore = calculateQuestionScore(answers1[qId], answers2[qId], polarity);
+      const questionMaxScore = polarity === 'red-flag' || polarity === 'green-flag' ? 1.5 : 1.0;
+
+      totalScore += questionScore;
+      maxPossibleScore += questionMaxScore;
+
+      // Track by category
+      if (category === 'chemistry' || category === 'both') {
+        chemistryScore += questionScore;
+        chemistryMaxScore += questionMaxScore;
+      }
+
+      if (category === 'romance' || category === 'both') {
+        romanceScore += questionScore;
+        romanceMaxScore += questionMaxScore;
       }
     }
   });
 
-  // Calculate base compatibility (65-98% range)
-  const baseCompatibility = totalQuestions > 0
-    ? Math.round((matchingAnswers / totalQuestions) * 100)
+  // Calculate base compatibility (65-98% range with better scaling)
+  const baseCompatibility = maxPossibleScore > 0
+    ? Math.round((totalScore / maxPossibleScore) * 100)
     : 75;
 
   const overallPercentage = Math.min(98, Math.max(65, baseCompatibility));
 
-  // Calculate chemistry percentage (if we have chemistry questions, use them; otherwise derive from overall)
+  // Calculate chemistry percentage using weighted scores
   let chemistryPercentage: number;
-  if (chemistryTotal > 0) {
-    const baseChemistry = Math.round((chemistryMatches / chemistryTotal) * 100);
+  if (chemistryMaxScore > 0) {
+    const baseChemistry = Math.round((chemistryScore / chemistryMaxScore) * 100);
     chemistryPercentage = Math.min(99, Math.max(70, baseChemistry));
   } else {
     // Fallback to overall with slight variance
     chemistryPercentage = Math.min(99, Math.max(70, overallPercentage + Math.floor(Math.random() * 10) - 5));
   }
 
-  // Calculate romance percentage (if we have romance questions, use them; otherwise derive from overall)
+  // Calculate romance percentage using weighted scores
   let romancePercentage: number;
-  if (romanceTotal > 0) {
-    const baseRomance = Math.round((romanceMatches / romanceTotal) * 100);
+  if (romanceMaxScore > 0) {
+    const baseRomance = Math.round((romanceScore / romanceMaxScore) * 100);
     romancePercentage = Math.min(99, Math.max(70, baseRomance));
   } else {
     // Fallback to overall with slight variance
@@ -169,37 +226,38 @@ export function calculateCompatibility(
 
   // Generate dynamic description based on actual compatibility
   const descriptions = overallPercentage >= 85 ? [
-    `${name1} and ${name2} have incredible chemistry! You're aligned on the things that matter most, from how you communicate to what you value in a relationship.`,
-    `${name1} and ${name2} are a wonderful match! You both love and hate the same things, which creates a beautiful foundation for understanding.`,
-    `${name1} and ${name2} share a deep connection! Your dealbreakers and green flags align perfectly, making this relationship feel natural and effortless.`,
+    `${name1} and ${name2} are on the same wavelength! Your green flags match, your red flags align, and you both know what makes a relationship work.`,
+    `${name1} and ${name2} have that "just get each other" energy. You agree on the dealbreakers and share the same relationship standards.`,
+    `${name1} and ${name2} are a power couple in the making! You've both figured out what healthy love looks like, and you want the same things.`,
   ] : overallPercentage >= 70 ? [
-    `${name1} and ${name2} have solid compatibility! You agree on most of the important things, with just enough difference to keep things interesting.`,
-    `${name1} and ${name2} are well-matched! Your shared values and boundaries create a strong foundation for growth together.`,
+    `${name1} and ${name2} are well-matched! You're aligned on what matters most, with just enough spice to keep things interesting.`,
+    `${name1} and ${name2} have strong compatibility. You share core values and know where your boundaries are. Solid foundation for something real.`,
   ] : [
-    `${name1} and ${name2} have an interesting dynamic! While you have some differences, understanding each other's boundaries could make this work.`,
-    `${name1} and ${name2} bring different perspectives! Your varied approaches to relationships could complement each other with open communication.`,
+    `${name1} and ${name2} have some differences to navigate. Communication will be key, but different doesn't mean incompatible.`,
+    `${name1} and ${name2} approach love differently. If you're both willing to meet in the middle, there's potential here.`,
   ];
+
   const description = descriptions[Math.floor(Math.random() * descriptions.length)];
 
   // Chemistry descriptions based on score
   const chemistryDescriptions = chemistryPercentage >= 85 ? [
-    'You both value open dialogue and active listening',
-    'Your communication styles mesh seamlessly',
-    'You handle conflict and connection the same way',
+    'You both speak the same love language when it comes to communication',
+    'Arguments? You handle them the same way. Connection? Same page.',
+    'You\'re giving "finish each other\'s sentences" energy',
   ] : [
-    'You have different communication styles that could complement each other',
-    'Understanding each other\'s needs will strengthen your bond',
+    'Different communication styles, but that could actually work in your favor',
+    'You\'ll need to learn each other\'s language, but the foundation is there',
   ];
   const chemistryDescription = chemistryDescriptions[Math.floor(Math.random() * chemistryDescriptions.length)];
 
   // Romance descriptions based on score
   const romanceDescriptions = romancePercentage >= 85 ? [
-    'Your love languages align beautifully',
-    'You share similar romantic ideals and expectations',
-    'Your approach to affection and romance matches perfectly',
+    'Your love languages are basically the same person',
+    'What you need to feel loved? They get it. Main character energy.',
+    'You want the same things: same effort, same energy, same vibe',
   ] : [
-    'You express love differently, creating opportunities to learn from each other',
-    'Your varied romantic styles could bring exciting balance',
+    'You show love differently, but that just means more ways to feel it',
+    'Different romantic styles could mean balance if you both stay curious',
   ];
   const romanceDescription = romanceDescriptions[Math.floor(Math.random() * romanceDescriptions.length)];
 

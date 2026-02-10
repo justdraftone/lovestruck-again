@@ -1,6 +1,6 @@
 import { PersonaResult } from '../lib/resultsEngine';
 import { personaVisuals } from '../data/results';
-import { PersonaName } from '../data/personas';
+import { PersonaName, personas } from '../data/personas';
 
 interface ResultCardProps {
   result: PersonaResult;
@@ -10,6 +10,7 @@ interface ResultCardProps {
   pairsWellWith?: PersonaName;
   showShareable?: boolean;
   hidePairings?: boolean;
+  samePersona?: boolean;
   onShareClick?: () => void;
   onPairingClick?: (personaName: PersonaName) => void;
 }
@@ -22,9 +23,10 @@ export default function ResultCard({
   pairsWellWith,
   showShareable = false,
   hidePairings = false,
+  samePersona = false,
   onPairingClick,
 }: ResultCardProps) {
-  const isLarge = variant === 'large';
+  const isLarge = variant === 'large' || variant === 'shareable';
   const isShareable = variant === 'shareable' || showShareable;
   const visuals = personaVisuals[result.name];
   const gradient = visuals?.gradient || personaVisuals["The Vibe Checker"].gradient;
@@ -64,7 +66,7 @@ export default function ResultCard({
       />
 
       <p className={`result-card__desc ${isLarge ? 'result-card__desc--large' : ''}`}>
-        {result.description}
+        {samePersona ? (personas[result.name]?.coupleDescription || result.description) : result.description}
       </p>
 
       {!hidePairings && (

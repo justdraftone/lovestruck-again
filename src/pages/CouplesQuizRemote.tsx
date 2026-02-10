@@ -94,8 +94,8 @@ export default function CouplesQuizRemote() {
       return sourceQuestions.filter(q => selectedQuestionIds.includes(q.id));
     }
 
-    // Otherwise, select 7 random questions
-    const selected = selectRandomQuestions(sourceQuestions, 7);
+    // Otherwise, select 14 random questions (7 for each partner)
+    const selected = selectRandomQuestions(sourceQuestions, 14);
     setSelectedQuestions(selected.map(q => q.id));
     return selected;
   }, [questionSet, selectedQuestionIds, setSelectedQuestions]);
@@ -302,9 +302,6 @@ export default function CouplesQuizRemote() {
       <div className="page page--centered gradient-love">
         <div className="header header__couples-quiz-remote">
           <button className="back-btn" onClick={() => navigate('/couples')}>
-            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
             Back
           </button>
           <img src="/assets/illos/d1-x-loveorlies.svg" alt="" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} />
@@ -348,18 +345,12 @@ export default function CouplesQuizRemote() {
       <div className="page page--centered gradient-love">
         <div className="header header__couples-quiz-remote">
           <button onClick={() => navigate('/')} className="back-btn">
-            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
             Back
           </button>
           <img src="../../public/assets/illos/d1-x-loveorlies.svg" alt="" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} />
         </div>
         {/* <div className="header header">
           <button className="back-btn" onClick={() => navigate('/couples')}>
-            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
             Back
           </button>
           <img src="/assets/illos/d1-x-loveorlies.svg" alt="" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} />

@@ -1237,17 +1237,23 @@ html {
 .back-btn {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   color: $gray-800;
-  background: none;
+  background: white;
   border: none;
+  border-radius: 24px;
+  padding: 8px 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   cursor: pointer;
   margin-bottom: 32px;
-  margin-left: -50%;
+  margin-left: auto;
+  margin-right: auto;
   font-size: 1rem;
 
   &:hover {
     color: $gray-800;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
 }
 
@@ -1785,27 +1791,42 @@ html {
   }
 
   &--shareable {
-    padding: var(--card-padding-top, 28px) var(--card-padding-side, 60px) var(--card-padding-bottom, 92px);
+    padding-top: 20px;
+    padding-left: 64px;
+    padding-right: 64px;
+    padding-bottom: 64px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3),
                 0 8px 16px rgba(0, 0, 0, 0.2),
                 inset 0 0 0 8px #FFFFFF80;
-    max-width: 520px;
+    max-width: 590px;
+    width: 100%;
     border-radius: 48px !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 
     .result-card__desc--large {
-      font-size: var(--desc-font-size, 0.8875rem);
-      line-height: var(--desc-line-height, 1.5);
-      margin-top: var(--desc-margin-top, -55px);
-      margin-bottom: var(--desc-margin-bottom, 16px);
+      font-size: 0.75rem;
+      line-height: 1.5;
+      margin-top: -34px;
+      margin-bottom: 32px;
+      width: 150%;
     }
 
     .result-card__image--large {
-      width: var(--image-size, 300px);
-      height: var(--image-size, 300px);
+      width: 250px;
+      height: 250px;
     }
 
     .result-card__name--large {
-      font-size: var(--title-size, 3.4rem);
+      font-size: 2rem;
+    }
+
+    .result-card__cloud {
+      bottom: -30%;
+      left: -10%;
+      width: 270%;
+      transform: translateX(-50%);
     }
   }
 
@@ -1814,7 +1835,10 @@ html {
     font-weight: 600;
     text-align: center;
     margin-bottom: 8px;
+    margin-left: auto;
+    margin-right: auto;
     padding: 4px 16px;
+    display: inline-block;
     border-radius: $radius-full;
     background: rgba(255, 255, 255, 0.2);
     color: white;
@@ -2009,8 +2033,26 @@ html {
     display: flex;
     flex-direction: column;
     border-radius: 48px;
-    overflow: hidden;
+    overflow: visible;
     position: relative;
+    min-height: 500px;
+
+    > * {
+      // animation: cardFadeIn 0.3s ease-out;
+      opacity: 1 !important;
+      transform: none !important;
+    }
+  }
+
+  @keyframes cardFadeIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
   }
 
   &__logo {
@@ -2047,6 +2089,71 @@ html {
   &__icon {
     width: 20px;
     height: 20px;
+  }
+
+  &__navigation {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+  }
+
+  &__nav-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: white;
+
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    &:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.05);
+    }
+
+    &:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+  }
+
+  &__indicators {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+  }
+
+  &__indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+
+    &--active {
+      background: white;
+      width: 24px;
+      border-radius: 4px;
+    }
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.5);
+    }
   }
 
   &__close {
@@ -3573,6 +3680,7 @@ html {
   &--shareable {
     padding: 60px 32px 140px;
     min-width: 320px;
+    min-height: 900px;
     position: relative;
 
     .compatibility-card__description {
@@ -4222,6 +4330,21 @@ html {
       flex-direction:column;
       left:50%;
       transform: translateX(-50%);
+      align-items: center;
+      gap: 12px;
+
+      .back-btn {
+        position: static !important;
+        align-self: center !important;
+        margin: 0;
+        left: auto !important;
+        top: auto !important;
+        background: white;
+        border-radius: 24px;
+        padding: 8px 16px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
       &-couples-results{
         position:static;
         transform: none;
@@ -4317,6 +4440,21 @@ html {
       flex-direction:column;
       left:50%;
       transform: translateX(-50%);
+      align-items: center;
+      gap: 12px;
+
+      .back-btn {
+        position: static !important;
+        align-self: center !important;
+        margin: 0;
+        left: auto !important;
+        top: auto !important;
+        background: white;
+        border-radius: 24px;
+        padding: 8px 16px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
       &-couples-results{
         position:static;
         transform: none;
@@ -4536,6 +4674,78 @@ html {
     margin-top: 32px;
   }
 
+  // Couples mode select
+  .container--couples-mode-select {
+    max-width: 129%;
+    padding: 0 0px;
+  }
+
+  .mode-card {
+    width: 127%;
+  }
+
+  .header__couples-quiz .back-btn {
+    padding: 12px 26px;
+    border-radius: 20px;
+    font-size: 1rem;
+    margin-top: 69px;
+    margin-bottom: -84px;
+    margin-left: 139px;
+    margin-right: -65px;
+  }
+
+  // Couples results page
+  .header__quiz-couples-results {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+
+    img {
+      margin-top: 24px;
+    }
+
+    .back-btn {
+      position: static;
+      padding: 12px 26px;
+      border-radius: 20px;
+      font-size: 1rem;
+      margin-top: 69px;
+      margin-bottom: -84px;
+      margin-left: 139px;
+      margin-right: -65px;
+    }
+  }
+
+  .compatibility-card {
+    padding-top: 38px;
+    padding-bottom: 32px;
+    min-height: 210px;
+  }
+
+  .compatibility-card__percentage {
+    margin-bottom: 1px;
+  }
+
+  .compatibility-card__description {
+    margin-top: -29px;
+  }
+
+  .compatibility-card__cloud {
+    width: 310%;
+    bottom: -109%;
+    left: -16%;
+  }
+
+  .stat-card__percentage {
+    font-size: 2rem;
+  }
+
+  .stat-card {
+    padding: 24px;
+  }
+
+
   // Results page
   .container--results {
     max-width: 100%;
@@ -4635,12 +4845,65 @@ html {
       font-family: "Rosindale", "Rosindale Italic Bold", serif;
     }
     &--shareable {
-      min-width:0;
+      min-width: 0;
+      min-height: 900px;
     }
 }
 
   .compatibility-stats {
     flex-direction: column;
+  }
+
+  .couples-results {
+    gap: 16px;
+    margin-top: 32px;
+  }
+
+  .share-modal {
+    &__nav-btn {
+      width: 36px;
+      height: 36px;
+
+      svg {
+        width: 18px;
+        height: 18px;
+      }
+    }
+
+    &__navigation {
+      gap: 12px;
+    }
+  }
+
+  .partner-flip-container {
+    .result-card--large {
+      padding: 24px 20px 28px;
+      gap: 10px;
+    }
+
+    .result-card__name--large {
+      font-size: 2.3rem;
+      line-height: 1.2;
+    }
+
+    .result-card__image--large {
+      width: 260px;
+      height: 260px;
+    }
+
+    .result-card__desc--large {
+      font-size: 0.75rem;
+      line-height: 1.5;
+      padding: 0 8px;
+      margin-top: -30px;
+    }
+
+    .result-card__cloud {
+      bottom: -35%;
+      width: 320%;
+      left: -20%;
+      transform: translateX(-50%);
+    }
   }
 
 
@@ -4702,7 +4965,7 @@ html {
   // Mode selection cards
   .mode-card {
     padding: 24px 20px;
-    width: calc(100% - 32px);
+    width: 100%;
 
     img{
       // display:none;
@@ -4929,6 +5192,9 @@ html {
                     0 8px 16px rgba(0, 0, 0, 0.2),
                     inset 0 0 0 8px #FFFFFF80;
         max-width: 590px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
 
         .result-card__desc--large {
           font-size:.75rem;

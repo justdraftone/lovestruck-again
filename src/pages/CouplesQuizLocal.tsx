@@ -33,11 +33,14 @@ export default function CouplesQuizLocal() {
   const [tempPartner2, setTempPartner2] = useState('');
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
   const [isSwiping, setIsSwiping] = useState<'left' | 'right' | null>(null);
-  const [showExplainer, setShowExplainer] = useState(() => {
-    const hasSeenExplainer = localStorage.getItem('hasSeenExplainer');
-    return !hasSeenExplainer;
-  });
+  const [showExplainer, setShowExplainer] = useState(false);
   const [isExplainerExiting, setIsExplainerExiting] = useState(false);
+
+  // Debug controls
+  const [showDebug, setShowDebug] = useState(true);
+  const [instructionFontSize, setInstructionFontSize] = useState(1);
+  const [instructionMarginBottom, setInstructionMarginBottom] = useState(100);
+  const [instructionMarginTop, setInstructionMarginTop] = useState(-112);
 
   // Select questions based on question set
   const questions = useMemo(() => {
@@ -48,8 +51,8 @@ export default function CouplesQuizLocal() {
       return sourceQuestions.filter(q => selectedQuestionIds.includes(q.id));
     }
 
-    // Otherwise, select 7 random questions
-    const selected = selectRandomQuestions(sourceQuestions, 7);
+    // Otherwise, select 14 random questions (7 for each partner)
+    const selected = selectRandomQuestions(sourceQuestions, 14);
     setSelectedQuestions(selected.map(q => q.id));
     return selected;
   }, [questionSet, selectedQuestionIds, setSelectedQuestions]);
@@ -62,6 +65,7 @@ export default function CouplesQuizLocal() {
     if (tempPartner1.trim() && tempPartner2.trim()) {
       setPartnerNames(tempPartner1.trim(), tempPartner2.trim());
       setNamesSet(true);
+      setShowExplainer(true); // Show instructions when game starts
     }
   };
 
@@ -98,9 +102,6 @@ export default function CouplesQuizLocal() {
       
       <div className="header header__couples-quiz header__couples-solo-lobby">
         <button onClick={() => navigate('/couples')} className="back-btn">
-          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
           Back
         </button>
         <img src="../../public/assets/illos/d1-x-loveorlies.svg" alt="" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} />
@@ -161,7 +162,6 @@ export default function CouplesQuizLocal() {
   const dismissExplainer = () => {
     setIsExplainerExiting(true);
     setTimeout(() => {
-      localStorage.setItem('hasSeenExplainer', 'true');
       setShowExplainer(false);
       setIsExplainerExiting(false);
     }, 200);
@@ -271,38 +271,117 @@ export default function CouplesQuizLocal() {
       {showExplainer && (
         <div className={`explainer ${isExplainerExiting ? 'explainer--exiting' : ''}`}>
           <div className="explainer__backdrop" onClick={dismissExplainer} />
-          <div className="explainer__content">
+          <div className="explainer__content" style={{ flexDirection: 'column' }}>
 
-            <div className='explainer__swipe'>
-              <button className="answer-btn answer-btn--icon">
-                <svg className="icon icon--red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-
-              <img src="/assets/icons/swipe-right.svg" alt="swipe right" />
-              <p>Tap X if it's a dealbreaker for you</p>
+            <div style={{ width: '100%', marginTop: `${instructionMarginTop}px`, marginBottom: `${instructionMarginBottom}px`, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+              <div style={{
+                fontSize: '1rem',
+                fontWeight: 'bold',
+                padding: '8px 16px',
+                background: 'rgba(255, 255, 255, 0.9)',
+                borderRadius: '20px',
+                color: '#333'
+              }}>
+                {partner1Name || 'Partner 1'}'s Turn
+              </div>
+              <p style={{ color: 'white', fontSize: `${instructionFontSize}rem`, textAlign: 'center', lineHeight: '1.2', margin: 0, display: 'block', width: '100%', fontWeight: 500, letterSpacing: '-0.02em' }}>
+                Take turns answering each question
+              </p>
             </div>
 
-            <button onClick={dismissExplainer} className="explainer__btn btn btn--primary">
-              Let's goooo
-            </button>
+            <div style={{ display: 'flex', flexDirection: 'row', gap: '90px', width: '100%', justifyContent: 'center', alignItems: 'center' }}>
+              <div className='explainer__swipe'>
+                <button className="answer-btn answer-btn--icon">
+                  <svg className="icon icon--red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
 
-            <div className='explainer__swipe'>
-              <button className="answer-btn answer-btn--icon">
-                <svg className="icon icon--green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                </svg>
+                <img src="/assets/icons/swipe-right.svg" alt="swipe right" />
+                <p>Tap X if it's a dealbreaker for you</p>
+              </div>
+
+              <button onClick={dismissExplainer} className="explainer__btn btn btn--primary">
+                Let's goooo
               </button>
 
-              <img src="/assets/icons/swipe-left.svg" alt="swipe left" />
-              <p>Tap green if you're cool with it</p>
+              <div className='explainer__swipe'>
+                <button className="answer-btn answer-btn--icon">
+                  <svg className="icon icon--green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  </svg>
+                </button>
+
+                <img src="/assets/icons/swipe-left.svg" alt="swipe left" />
+                <p>Tap green if you're cool with it</p>
+              </div>
             </div>
 
           </div>
         </div>
       )}
+
+      {showDebug && namesSet && (
+        <div style={{
+          position: 'fixed',
+          bottom: 20,
+          left: 20,
+          right: 20,
+          background: 'rgba(0,0,0,0.9)',
+          padding: '20px',
+          borderRadius: '12px',
+          zIndex: 10000,
+          maxHeight: '70vh',
+          overflow: 'auto',
+          color: 'white',
+          fontSize: '14px'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
+            <h3 style={{ margin: 0 }}>Instruction Modal Debug</h3>
+            <button onClick={() => setShowDebug(false)} style={{ background: '#ff4444', border: 'none', padding: '5px 10px', borderRadius: '6px', color: 'white', cursor: 'pointer' }}>
+              Hide
+            </button>
+          </div>
+
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{ display: 'block', marginBottom: '5px' }}>Instruction Margin Top: {instructionMarginTop}px</label>
+            <input type="range" min="-200" max="200" value={instructionMarginTop} onChange={(e) => setInstructionMarginTop(Number(e.target.value))} style={{ width: '100%' }} />
+          </div>
+
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{ display: 'block', marginBottom: '5px' }}>Instruction Margin Bottom: {instructionMarginBottom}px</label>
+            <input type="range" min="0" max="100" value={instructionMarginBottom} onChange={(e) => setInstructionMarginBottom(Number(e.target.value))} style={{ width: '100%' }} />
+          </div>
+
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{ display: 'block', marginBottom: '5px' }}>Instruction Font Size: {instructionFontSize}rem</label>
+            <input type="range" min="0.5" max="3" step="0.1" value={instructionFontSize} onChange={(e) => setInstructionFontSize(Number(e.target.value))} style={{ width: '100%' }} />
+          </div>
+
+          <button onClick={() => setShowExplainer(true)} style={{ width: '100%', padding: '12px', background: '#4CAF50', border: 'none', borderRadius: '8px', color: 'white', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold', marginTop: '10px' }}>
+            Show Modal Again
+          </button>
+        </div>
+      )}
+
+      {!showDebug && namesSet && (
+        <button onClick={() => setShowDebug(true)} style={{
+          position: 'fixed',
+          bottom: 20,
+          right: 20,
+          background: 'rgba(0,0,0,0.7)',
+          border: 'none',
+          padding: '10px 15px',
+          borderRadius: '8px',
+          color: 'white',
+          cursor: 'pointer',
+          zIndex: 10000,
+          fontSize: '14px'
+        }}>
+          Show Debug
+        </button>
+      )}
     </div>
-    
+
   );
 }
