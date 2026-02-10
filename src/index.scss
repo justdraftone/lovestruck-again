@@ -5371,6 +5371,35 @@ html {
       max-height: 150px;
     }
 
+    &__resize-handle {
+      width: 44px;
+      height: 44px;
+      bottom: -12px;
+      right: -12px;
+      touch-action: none;
+      z-index: 20;
+      pointer-events: auto;
+    }
+
+    &__rotate-handle {
+      width: 44px;
+      height: 44px;
+      top: -44px;
+      touch-action: none;
+      z-index: 20;
+      pointer-events: auto;
+    }
+
+    &__image-remove {
+      width: 44px;
+      height: 44px;
+      top: -22px;
+      right: -22px;
+      touch-action: none;
+      z-index: 20;
+      pointer-events: auto;
+    }
+
     &__header {
       padding: 24px 0 0 0;
     }

@@ -50,8 +50,21 @@ export default function CreateLetter() {
     });
   };
 
-  const handleResizeMouseDown = (e: React.MouseEvent) => {
+  const handleImageTouchStart = (e: React.TouchEvent) => {
+    e.preventDefault();
     e.stopPropagation();
+    const touch = e.touches[0];
+    setIsDragging(true);
+    setDragOffset({
+      x: touch.clientX - imagePosition.x,
+      y: touch.clientY - imagePosition.y
+    });
+  };
+
+  const handleResizeMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false); // Ensure dragging is off
     setIsResizing(true);
     setResizeStart({
       width: imageSize.width,
@@ -61,12 +74,40 @@ export default function CreateLetter() {
     });
   };
 
-  const handleRotateMouseDown = (e: React.MouseEvent) => {
+  const handleResizeTouchStart = (e: React.TouchEvent) => {
+    e.preventDefault();
     e.stopPropagation();
+    const touch = e.touches[0];
+    setIsDragging(false); // Ensure dragging is off
+    setIsResizing(true);
+    setResizeStart({
+      width: imageSize.width,
+      height: imageSize.height,
+      x: touch.clientX,
+      y: touch.clientY
+    });
+  };
+
+  const handleRotateMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false); // Ensure dragging is off
     setIsRotating(true);
     const centerX = imagePosition.x + imageSize.width / 2;
     const centerY = imagePosition.y + imageSize.height / 2;
     const angle = Math.atan2(e.clientY - centerY, e.clientX - centerX) * 180 / Math.PI;
+    setRotateStart({ angle: angle - imageRotation, x: centerX, y: centerY });
+  };
+
+  const handleRotateTouchStart = (e: React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const touch = e.touches[0];
+    setIsDragging(false); // Ensure dragging is off
+    setIsRotating(true);
+    const centerX = imagePosition.x + imageSize.width / 2;
+    const centerY = imagePosition.y + imageSize.height / 2;
+    const angle = Math.atan2(touch.clientY - centerY, touch.clientX - centerX) * 180 / Math.PI;
     setRotateStart({ angle: angle - imageRotation, x: centerX, y: centerY });
   };
 
@@ -90,7 +131,37 @@ export default function CreateLetter() {
     }
   };
 
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (isDragging || isResizing || isRotating) {
+      e.preventDefault();
+    }
+    const touch = e.touches[0];
+    if (isDragging) {
+      setImagePosition({
+        x: touch.clientX - dragOffset.x,
+        y: touch.clientY - dragOffset.y
+      });
+    } else if (isResizing) {
+      const deltaX = touch.clientX - resizeStart.x;
+      const deltaY = touch.clientY - resizeStart.y;
+      const delta = Math.max(deltaX, deltaY);
+      setImageSize({
+        width: Math.max(50, resizeStart.width + delta),
+        height: Math.max(50, resizeStart.height + delta)
+      });
+    } else if (isRotating) {
+      const angle = Math.atan2(touch.clientY - rotateStart.y, touch.clientX - rotateStart.x) * 180 / Math.PI;
+      setImageRotation(angle - rotateStart.angle);
+    }
+  };
+
   const handleMouseUp = () => {
+    setIsDragging(false);
+    setIsResizing(false);
+    setIsRotating(false);
+  };
+
+  const handleTouchEnd = () => {
     setIsDragging(false);
     setIsResizing(false);
     setIsRotating(false);
@@ -140,7 +211,7 @@ export default function CreateLetter() {
           style={{ display: 'none' }}
         />
 
-        <div className="letter-create__card" onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}>
+        <div className="letter-create__card" onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
           <div className="letter-create__content">
             <h2 className="letter-create__greeting">
               Dear{' '}
@@ -184,6 +255,7 @@ export default function CreateLetter() {
                   cursor: isDragging ? 'grabbing' : 'grab'
                 }}
                 onMouseDown={handleImageMouseDown}
+                onTouchStart={handleImageTouchStart}
               >
                 <img src={image} alt="Attached" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
 
@@ -191,6 +263,7 @@ export default function CreateLetter() {
                 <div
                   className="letter-create__resize-handle"
                   onMouseDown={handleResizeMouseDown}
+                  onTouchStart={handleResizeTouchStart}
                   style={{ cursor: 'nwse-resize' }}
                 />
 
@@ -198,6 +271,7 @@ export default function CreateLetter() {
                 <div
                   className="letter-create__rotate-handle"
                   onMouseDown={handleRotateMouseDown}
+                  onTouchStart={handleRotateTouchStart}
                   style={{ cursor: 'grab' }}
                 >
                   <svg width="16" height="16" fill="none" stroke="white" viewBox="0 0 24 24">
