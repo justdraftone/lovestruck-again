@@ -141,7 +141,7 @@ export default function ShareModal({ isOpen, onClose, result }: ShareModalProps)
         >
           <ResultCard result={result} variant="large" showShareable hidePairings />
           <div className="share-modal__logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
-            <img src="/assets/collab-logo.png" alt="Draft One x Love or Lies" />
+            <img src="/assets/collab-logo.webp" alt="Draft One x Love or Lies" />
           </div>
         </div>
 

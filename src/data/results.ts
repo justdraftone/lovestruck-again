@@ -30,7 +30,7 @@ export const personaVisuals: Record<PersonaName, PersonaVisuals> = {
   },
   "The Vibe Checker": {
     gradient: 'linear-gradient(135deg, #FFEAA7 0%, #FDCB6E 30%, #F39C12 100%)',
-    image: '/assets/results/heart-dice.png',
+    image: '/assets/results/heart-dice.webp',
     pairsWellWith: "The Serial Ghoster"
   },
   "The Trauma Magnet": {

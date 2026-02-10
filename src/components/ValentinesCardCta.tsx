@@ -33,7 +33,7 @@ export default function ValentinesCardCta({
   const content = (
     <div className="cta-card cta-card--floating">
       <img
-        src="/assets/results/heart-ball-1.png"
+        src="/assets/results/heart-ball-1.webp"
         alt=""
         className="cta-card__heart"
       />

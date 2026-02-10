@@ -72,7 +72,7 @@ export default function CompatibilityCard({
 
       {shareable && (
         <div className="share-modal__logo" style={{ bottom: '34px' }}>
-          <img src="/assets/collab-logo.png" alt="Draft One x Love or Lies" />
+          <img src="/assets/collab-logo.webp" alt="Draft One x Love or Lies" />
         </div>
       )}
     </div>
