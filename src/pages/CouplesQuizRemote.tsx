@@ -557,10 +557,7 @@ export default function CouplesQuizRemote() {
 
       {isCalculating && (
         <div className="calculating-overlay">
-          <div className="calculating-overlay__content">
-            <Loader />
-            <p className="calculating-overlay__text">Calculating your results...</p>
-          </div>
+          <Loader />
         </div>
       )}
 
