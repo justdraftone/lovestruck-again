@@ -124,7 +124,7 @@ export default function SoloQuiz() {
       </div>
 
       <div id="swipe-area" className="swipe-area swipe-area__solo">
-        <button onClick={handleSwipeLeft} className="fab fab--left" aria-label="Dealbreaker">
+        <button onClick={handleSwipeLeft} className="fab fab--left" aria-label="Dealbreaker" style={{ display: isCalculating ? 'none' : 'flex' }}>
           <svg className="icon icon--red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
           </svg>
@@ -172,14 +172,14 @@ export default function SoloQuiz() {
           })}
         </div>
 
-        <button onClick={handleSwipeRight} className="fab fab--right" aria-label="Cool with it">
+        <button onClick={handleSwipeRight} className="fab fab--right" aria-label="Cool with it" style={{ display: isCalculating ? 'none' : 'flex' }}>
           <svg className="icon icon--green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
           </svg>
         </button>
       </div>
 
-      <div className="progress">
+      <div className="progress" style={{ display: isCalculating ? 'none' : 'block' }}>
         <div className="progress__track">
           <div className="progress__fill" style={{ width: `${progress}%` }} />
         </div>

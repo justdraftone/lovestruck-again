@@ -470,6 +470,7 @@ export default function CouplesQuizRemote() {
           className={`fab fab--left ${!isMyTurn ? 'fab--disabled' : ''}`}
           aria-label="No"
           disabled={!isMyTurn}
+          style={{ display: isCalculating ? 'none' : 'flex' }}
         >
           <svg className="icon icon--red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
@@ -540,6 +541,7 @@ export default function CouplesQuizRemote() {
           className={`fab fab--right ${!isMyTurn ? 'fab--disabled' : ''}`}
           aria-label="Yes"
           disabled={!isMyTurn}
+          style={{ display: isCalculating ? 'none' : 'flex' }}
         >
           <svg className="icon icon--green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -547,7 +549,7 @@ export default function CouplesQuizRemote() {
         </button>
       </div>
 
-      <div className="progress progress__couples-quiz-remote">
+      <div className="progress progress__couples-quiz-remote" style={{ display: isCalculating ? 'none' : 'block' }}>
         <div className="progress__track">
           <div className="progress__fill" style={{ width: `${progress}%` }} />
         </div>
