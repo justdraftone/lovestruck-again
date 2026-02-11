@@ -10,7 +10,7 @@ export default function Privacy() {
         <p style={{ color: '#555', fontSize: '0.9rem', marginBottom: '1.5rem' }}>Last updated: February 2026</p>
 
         <p style={{ color: '#333', lineHeight: 1.7, marginBottom: '1.25rem' }}>
-          Letters created on Lovestruck are stored locally on your device. No one — including us — can read your letters. Only the person you share the letter code or link with can open it.
+          Letters created on Lovestruck are stored locally on your device. No one, including us, can read your letters. Only the person you share the letter code or link with can open it.
         </p>
         <p style={{ color: '#333', lineHeight: 1.7, marginBottom: '1.25rem' }}>
           We do not collect, store, or share any letter content. We do not require an account, email address, or any personal information to use this feature.
