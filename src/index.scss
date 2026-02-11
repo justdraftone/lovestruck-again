@@ -6706,9 +6706,29 @@ html {
   background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
   color: #1a1a2e;
   font-weight: 600;
-  
+
   &:hover {
     background: linear-gradient(135deg, #FFC700 0%, #FF9500 100%);
     transform: translateY(-2px);
+  }
+}
+
+// Loader
+.loader {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 400px;
+  height: 400px;
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+
+  @media (max-width: 768px) {
+    width: 250px;
+    height: 250px;
   }
 }
