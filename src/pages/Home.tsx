@@ -50,8 +50,9 @@ export default function Home() {
 
         <BlurImage className="lovestruck-title-img" src="/assets/illos/love-struck-again-title.webp" alt="" loading="lazy" style={{ marginTop: '-70px' }} />
         <p className="subtitle">
-          Ever wondered what type of lover you are? Do you have bad character or are you just too elite for the dating pool?
-          <br/><br/>Swipe through to discover your true dating fate.
+          Are you the problem, or is everyone just unserious?
+          <br/><br/>Find out what kind of lover you are and get your official dating diagnosis.
+          <br/><br/>Swipe through to discover your true fate.
         </p>
 
         <div className="btn-group">
