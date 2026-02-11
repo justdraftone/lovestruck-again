@@ -32,10 +32,8 @@ export default function LetterHome() {
           </div>
 
           <p className="letter-home__credits">
-            Made with ❤️ by <a href="https://justdraftone.xyz/" target="_blank" rel="noopener noreferrer">draftone</a>
-          </p>
-          <p className="letter-home__credits">
-            <a href="/privacy" style={{ textDecoration: 'underline' }}>Your letters are private and only accessible by the recipient.</a>
+            Made with ❤️ by <a href="https://justdraftone.xyz/" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>draftone</a>
+            {' · '}Your letters are private and only accessible by the recipient. <a href="/privacy" style={{ color: 'inherit', textDecoration: 'underline' }}>privacy policy</a>
           </p>
         </div>
 
