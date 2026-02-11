@@ -30,7 +30,7 @@ export default function CreateLetter() {
 
   // Sticker state
   const [sticker, setSticker] = useState<string | undefined>();
-  const [stickerPosition, setStickerPosition] = useState({ x: 320, y: 80 });
+  const [stickerPosition, setStickerPosition] = useState({ x: 180, y: 160 });
   const [stickerSize, setStickerSize] = useState({ width: 100, height: 100 });
   const [stickerRotation, setStickerRotation] = useState(0);
   const [isStickerDragging, setIsStickerDragging] = useState(false);
@@ -108,7 +108,7 @@ export default function CreateLetter() {
   // --- Sticker handlers ---
   const handleStickerSelect = (src: string) => {
     setSticker(src);
-    setStickerPosition({ x: 320, y: 80 });
+    setStickerPosition({ x: 180, y: 160 });
     setStickerSize({ width: 100, height: 100 });
     setStickerRotation(0);
   };
