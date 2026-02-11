@@ -68,26 +68,29 @@ function catmullRomPath(pts: { x: number; y: number }[], tension = 0.3): string 
 function AreaChart({ points, color }: { points: number[]; color: string }) {
   if (points.length < 2) return <div style={{ ...S.muted, padding: '1.5rem 0', textAlign: 'center' }}>Not enough data</div>
   const max = Math.max(...points, 1)
-  const W = 100, H = 100
-  const step = W / (points.length - 1)
-  const pts = points.map((v, i) => ({ x: i * step, y: H - (v / max) * H * 0.9 - H * 0.05 }))
+  const W = 100, H = 100, PAD = 3
+  const step = (W - PAD * 2) / (points.length - 1)
+  const pts = points.map((v, i) => ({ x: PAD + i * step, y: H - (v / max) * H * 0.88 - H * 0.06 }))
   const linePath = catmullRomPath(pts)
   const last = pts[pts.length - 1]
-  const areaPath = `${linePath} L ${last.x} ${H} L 0 ${H} Z`
+  const first = pts[0]
+  const areaPath = `${linePath} L ${last.x} ${H} L ${first.x} ${H} Z`
   const gradId = `g${color.replace(/[^a-z0-9]/gi, '')}`
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ width: '100%', height: '200px', display: 'block', margin: '0 -2px' }}>
-      <defs>
-        <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%"   stopColor={color} stopOpacity="0.30" />
-          <stop offset="60%"  stopColor={color} stopOpacity="0.15" />
-          <stop offset="100%" stopColor={color} stopOpacity="0.00" />
-        </linearGradient>
-      </defs>
-      <path d={areaPath} fill={`url(#${gradId})`} />
-      <path d={linePath} fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
-    </svg>
+    <div style={{ overflow: 'hidden', margin: '0 -1px' }}>
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ width: 'calc(100% + 2px)', height: '200px', display: 'block' }}>
+        <defs>
+          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stopColor={color} stopOpacity="0.30" />
+            <stop offset="60%"  stopColor={color} stopOpacity="0.15" />
+            <stop offset="100%" stopColor={color} stopOpacity="0.00" />
+          </linearGradient>
+        </defs>
+        <path d={areaPath} fill={`url(#${gradId})`} />
+        <path d={linePath} fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+      </svg>
+    </div>
   )
 }
 
@@ -309,6 +312,7 @@ export default function Admin() {
     const byCountry: Record<string, number>   = {}
     let todayCount = 0, weekCount = 0
     let gamesCompleted = 0, soloCompleted = 0, couplesCompleted = 0, soloShared = 0, couplesShared = 0
+    let lettersSent = 0
 
     filteredVisits.forEach(v => {
       const d = new Date(v.created_at)
@@ -324,6 +328,8 @@ export default function Admin() {
         if (mode === 'solo') soloCompleted++
         else if (mode.startsWith('couples')) couplesCompleted++
       }
+      if (et === 'letter_send') lettersSent++
+
       if (et === 'share_click') {
         const t = (v.metadata?.type as string) || ''
         if (t === 'solo_result') soloShared++
@@ -342,7 +348,7 @@ export default function Admin() {
 
     return { total: filteredVisits.length, today: todayCount, thisWeek: weekCount, uniqueUsers,
              byPath, byEventType, byReferrer, byCountry,
-             gamesCompleted, soloCompleted, couplesCompleted, soloShared, couplesShared }
+             gamesCompleted, soloCompleted, couplesCompleted, soloShared, couplesShared, lettersSent }
   }, [filteredVisits])
 
   const sorted = {
@@ -423,6 +429,7 @@ export default function Admin() {
           <StatCard label="Couples Completed" value={stats.couplesCompleted} accent="#9333ea" />
           <StatCard label="Solo Shares"       value={stats.soloShared}       accent="#dc2626" />
           <StatCard label="Couples Shares"    value={stats.couplesShared}    accent="#d97706" />
+          <StatCard label="Letters Sent"      value={stats.lettersSent}      accent="#c026d3" />
         </div>
 
         {/* Area chart — full width */}
