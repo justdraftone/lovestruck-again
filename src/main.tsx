@@ -1,23 +1,33 @@
 import { asyncWithLDProvider } from 'launchdarkly-react-client-sdk'
-import { StrictMode } from 'react'
+import { StrictMode, Fragment } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.scss'
 import App from './App.tsx'
 
-;(async () => {
-  const LDProvider = await asyncWithLDProvider({
-    clientSideID: import.meta.env.VITE_LD_CLIENT_ID as string,
-    context: {
-      kind: 'user',
-      key: 'anonymous',
-    },
-  })
-
+const renderApp = (Wrapper: React.ComponentType<{ children: React.ReactNode }> | typeof Fragment) => {
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
-      <LDProvider>
+      <Wrapper>
         <App />
-      </LDProvider>
+      </Wrapper>
     </StrictMode>,
   )
+}
+
+;(async () => {
+  const clientSideID = import.meta.env.VITE_LD_CLIENT_ID as string
+  if (!clientSideID) {
+    renderApp(Fragment)
+    return
+  }
+
+  try {
+    const LDProvider = await asyncWithLDProvider({
+      clientSideID,
+      context: { kind: 'user', key: 'anonymous' },
+    })
+    renderApp(LDProvider)
+  } catch {
+    renderApp(Fragment)
+  }
 })()

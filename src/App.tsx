@@ -21,7 +21,7 @@ import { useQuizStore } from './store/quizStore'
 import { useVisitTracking } from './hooks/useVisitTracking'
 import Admin from './pages/Admin'
 
-function App() {
+function AppContent() {
   const setQuestionSet = useQuizStore((s) => s.setQuestionSet)
   const ldClient = useLDClient()
 
@@ -37,7 +37,7 @@ function App() {
   }, [ldClient])
 
   return (
-    <BrowserRouter>
+    <>
       <NoiseOverlay />
       <Routes>
         <Route path="/" element={<Home />} />
@@ -56,6 +56,14 @@ function App() {
         <Route path="/letters/open" element={<OpenLetter />} />
         <Route path="/letters/view/:letterId" element={<ViewLetter />} />
       </Routes>
+    </>
+  )
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
     </BrowserRouter>
   )
 }
