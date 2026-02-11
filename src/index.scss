@@ -2644,14 +2644,23 @@ html {
     color: white;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     margin-bottom: 16px;
-    line-height: 1.2;
+    line-height: 1.05;
     font-style: italic;
+    max-width: 440px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   &__subtitle {
-    color: rgba(0, 0, 0, 0.9);
+    color: #57162D;
     font-size: 1.75rem;
     margin-bottom: 32px;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', system-ui, sans-serif;
+    font-weight: 500;
+    letter-spacing: -0.04em;
+    max-width: 300px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   &__buttons {
@@ -2715,14 +2724,14 @@ html {
     &--left {
       position:absolute;
       bottom: 15%;
-      left: 10%;
+      left: 2%;
       transform: rotate(-10deg);
     }
 
     &--right {
-      position:absolute;      
-      top: 10%;
-      right: 10%;
+      position:absolute;
+      top: 2%;
+      right: 2%;
       transform: rotate(8deg);
     }
   }
