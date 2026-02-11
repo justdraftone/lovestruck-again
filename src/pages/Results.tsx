@@ -52,10 +52,8 @@ export default function Results() {
         }
       }
 
-      // Show loader for at least 1.5 seconds
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 1500);
+      // No delay needed - Lottie already showed for 3 seconds
+      setIsLoading(false);
     };
 
     fetchRemoteData();
