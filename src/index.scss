@@ -3001,7 +3001,7 @@ html {
   &__image-preview,
   &__sticker-preview {
     position: absolute;
-    outline: 1.5px solid #3b82f6;
+    outline: 2px solid #C2185B;
     user-select: none;
     touch-action: none;
 
@@ -3013,8 +3013,8 @@ html {
     width: 10px;
     height: 10px;
     background: white;
-    border: 1.5px solid #3b82f6;
-    border-radius: 2px;
+    border: 2px solid #C2185B;
+    border-radius: 50%;
     z-index: 20;
 
     &--tl { top: -5px;    left: -5px;  cursor: nwse-resize; }
@@ -3025,16 +3025,18 @@ html {
 
   &__rotate-handle {
     position: absolute;
-    top: -36px;
+    top: -42px;
     left: 50%;
     transform: translateX(-50%);
-    width: 14px;
-    height: 14px;
-    background: white;
-    border: 1.5px solid #3b82f6;
+    width: 26px;
+    height: 26px;
+    background: rgba(0, 0, 0, 0.7);
     border-radius: 50%;
     cursor: grab;
     z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
     &::after {
       content: '';
@@ -3042,11 +3044,12 @@ html {
       top: 100%;
       left: 50%;
       transform: translateX(-50%);
-      width: 1.5px;
-      height: 20px;
-      background: #3b82f6;
+      width: 2px;
+      height: 14px;
+      background: #C2185B;
     }
 
+    &:hover { background: rgba(0, 0, 0, 0.9); }
     &:active { cursor: grabbing; }
   }
 
