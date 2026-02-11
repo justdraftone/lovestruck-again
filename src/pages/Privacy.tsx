@@ -6,7 +6,8 @@ export default function Privacy() {
   return (
     <div className="page page--centered gradient-love" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem 1.5rem' }}>
       <div style={{ maxWidth: '560px', width: '100%', background: 'rgba(255,255,255,0.92)', borderRadius: '16px', padding: '2.5rem', position: 'relative', zIndex: 1 }}>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem', color: '#1a1a1a' }}>Privacy</h1>
+        <p style={{ color: '#999', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.25rem' }}>Draftone</p>
+        <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem', color: '#1a1a1a' }}>Privacy Policy</h1>
         <p style={{ color: '#555', fontSize: '0.9rem', marginBottom: '1.5rem' }}>Last updated: February 2026</p>
 
         <p style={{ color: '#333', lineHeight: 1.7, marginBottom: '1.25rem' }}>

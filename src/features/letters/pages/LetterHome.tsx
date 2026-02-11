@@ -32,8 +32,8 @@ export default function LetterHome() {
           </div>
 
           <p className="letter-home__credits">
-            Made with ❤️ by <a href="https://justdraftone.xyz/" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>draftone</a>
-            {' · '}<a href="/privacy" style={{ color: 'inherit', textDecoration: 'underline' }}>privacy policy</a>
+            Made with ❤️ by <a href="https://justdraftone.xyz/" target="_blank" rel="noopener noreferrer">draftone</a>
+            {' · '}<a href="/privacy">privacy policy</a>
           </p>
         </div>
 
