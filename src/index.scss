@@ -2624,6 +2624,11 @@ html {
   padding: 24px;
   gap:64px;
 
+  .header {
+    max-width: 560px;
+    width: 100%;
+  }
+
   &__header {
     margin-bottom: 32px;
 
