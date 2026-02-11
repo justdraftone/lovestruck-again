@@ -7,7 +7,7 @@ export default function LetterHome() {
     <div className="page page--centered gradient-love">
       <div className="letter-home">
       <div className="header" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
-        <img src="../../public/assets/illos/d1-x-loveorlies.svg" alt="" />
+        <img src="/assets/illos/d1-x-loveorlies.svg" alt="" />
       </div>
 
         <div className="letter-home__content">
