@@ -22,6 +22,18 @@ const PERIODS: { label: string; value: Period }[] = [
   { label: 'All Time', value: 'all' },
 ]
 
+const S = {
+  page: { minHeight: '100vh', background: '#f4f5f7', fontFamily: 'system-ui, -apple-system, sans-serif' },
+  container: { maxWidth: '1200px', margin: '0 auto', padding: '2rem 1.5rem' },
+  card: { background: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '1.25rem' },
+  label: { fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#9ca3af', marginBottom: '0.4rem' },
+  bigNum: { fontSize: '2.25rem', fontWeight: 700, lineHeight: 1, color: '#111827', letterSpacing: '-0.02em' },
+  sectionTitle: { fontSize: '0.9rem', fontWeight: 600, color: '#374151', marginBottom: '1rem' },
+  row: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+  muted: { color: '#6b7280', fontSize: '0.8rem' },
+  track: { height: '3px', background: '#f3f4f6', borderRadius: '99px', marginTop: '4px' },
+} as const
+
 function getPeriodStart(period: Period): Date | null {
   const now = new Date()
   if (period === 'today') return new Date(now.getFullYear(), now.getMonth(), now.getDate())
@@ -29,6 +41,44 @@ function getPeriodStart(period: Period): Date | null {
   if (period === '30d') return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
   if (period === '90d') return new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
   return null
+}
+
+function eventBadge(type: string): { bg: string; color: string } {
+  const map: Record<string, { bg: string; color: string }> = {
+    page_visit:     { bg: '#eff6ff', color: '#2563eb' },
+    quiz_start:     { bg: '#fff7ed', color: '#c2410c' },
+    quiz_complete:  { bg: '#f0fdf4', color: '#16a34a' },
+    letter_create:  { bg: '#fdf4ff', color: '#9333ea' },
+    letter_send:    { bg: '#f0f0ff', color: '#4f46e5' },
+    letter_open:    { bg: '#ecfdf5', color: '#059669' },
+    share_click:    { bg: '#fef2f2', color: '#dc2626' },
+    download_click: { bg: '#fefce8', color: '#d97706' },
+  }
+  return map[type] ?? { bg: '#f9fafb', color: '#6b7280' }
+}
+
+function StatCard({ label, value, accent }: { label: string; value: number; accent?: string }) {
+  return (
+    <div style={{ ...S.card, borderTop: accent ? `2px solid ${accent}` : '1px solid #e5e7eb' }}>
+      <div style={S.label}>{label}</div>
+      <div style={{ ...S.bigNum, color: accent ?? '#111827' }}>{value}</div>
+    </div>
+  )
+}
+
+function BarRow({ label, count, total, fill }: { label: string; count: number; total: number; fill: string }) {
+  const pct = total > 0 ? Math.round((count / total) * 100) : 0
+  return (
+    <div style={{ marginBottom: '0.6rem' }}>
+      <div style={S.row}>
+        <span style={{ fontSize: '0.8rem', color: '#374151', fontFamily: 'monospace' }}>{label}</span>
+        <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>{count} <span style={{ color: '#d1d5db' }}>({pct}%)</span></span>
+      </div>
+      <div style={S.track}>
+        <div style={{ height: '100%', width: `${pct}%`, background: fill, borderRadius: '99px', transition: 'width 0.4s ease' }} />
+      </div>
+    </div>
+  )
 }
 
 export default function Admin() {
@@ -57,11 +107,10 @@ export default function Admin() {
         .select('*')
         .order('created_at', { ascending: false })
         .limit(5000)
-
       if (error) throw error
       setAllVisits(data || [])
-    } catch (error) {
-      console.error('Failed to fetch visits:', error)
+    } catch (err) {
+      console.error('Failed to fetch visits:', err)
       alert('Failed to fetch visit data')
     } finally {
       setLoading(false)
@@ -75,14 +124,12 @@ export default function Admin() {
     }
   }, [isAuthenticated])
 
-  // Filter visits by selected period
   const filteredVisits = useMemo(() => {
     const start = getPeriodStart(period)
     if (!start) return allVisits
     return allVisits.filter(v => new Date(v.created_at) >= start)
   }, [allVisits, period])
 
-  // Compute stats from filtered visits
   const stats = useMemo(() => {
     const now = new Date()
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
@@ -90,125 +137,126 @@ export default function Admin() {
 
     const byPath: Record<string, number> = {}
     const byEventType: Record<string, number> = {}
-    let todayCount = 0
-    let weekCount = 0
-    let gamesCompleted = 0
-    let soloCompleted = 0
-    let couplesCompleted = 0
-    let soloShared = 0
-    let couplesShared = 0
+    const byReferrer: Record<string, number> = {}
+    let todayCount = 0, weekCount = 0
+    let gamesCompleted = 0, soloCompleted = 0, couplesCompleted = 0
+    let soloShared = 0, couplesShared = 0
 
     filteredVisits.forEach((visit) => {
       const visitDate = new Date(visit.created_at)
       byPath[visit.path] = (byPath[visit.path] || 0) + 1
-      const eventType = visit.event_type || 'page_visit'
-      byEventType[eventType] = (byEventType[eventType] || 0) + 1
+      const et = visit.event_type || 'page_visit'
+      byEventType[et] = (byEventType[et] || 0) + 1
       if (visitDate >= todayStart) todayCount++
       if (visitDate >= weekStart) weekCount++
 
-      if (eventType === 'quiz_complete') {
+      if (et === 'quiz_complete') {
         gamesCompleted++
         const mode = (visit.metadata?.mode as string) || ''
         if (mode === 'solo') soloCompleted++
         else if (mode.startsWith('couples')) couplesCompleted++
       }
-      if (eventType === 'share_click') {
+      if (et === 'share_click') {
         const type = (visit.metadata?.type as string) || ''
         if (type === 'solo_result') soloShared++
         else if (type === 'couples_result') couplesShared++
       }
-    })
 
-    // Traffic sources: group by referrer domain
-    const byReferrer: Record<string, number> = {}
-    filteredVisits.forEach((visit) => {
       let source = '(direct)'
       if (visit.referrer) {
-        try {
-          const url = new URL(visit.referrer)
-          source = url.hostname.replace(/^www\./, '')
-        } catch {
-          source = visit.referrer
-        }
+        try { source = new URL(visit.referrer).hostname.replace(/^www\./, '') }
+        catch { source = visit.referrer }
       }
       byReferrer[source] = (byReferrer[source] || 0) + 1
     })
 
-    return { total: filteredVisits.length, today: todayCount, thisWeek: weekCount, byPath, byEventType, byReferrer, gamesCompleted, soloCompleted, couplesCompleted, soloShared, couplesShared }
+    return {
+      total: filteredVisits.length, today: todayCount, thisWeek: weekCount,
+      byPath, byEventType, byReferrer,
+      gamesCompleted, soloCompleted, couplesCompleted, soloShared, couplesShared,
+    }
   }, [filteredVisits])
 
+  // ── Login screen ──────────────────────────────────────────────────────────
   if (!isAuthenticated) {
     return (
-      <div className="page page--centered gradient-love" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ background: 'white', padding: '2rem', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', maxWidth: '400px', width: '100%' }}>
-          <h1 style={{ marginBottom: '1.5rem', textAlign: 'center', color: '#333' }}>Admin Dashboard</h1>
+      <div style={{ ...S.page, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ ...S.card, width: '100%', maxWidth: '380px', padding: '2rem' }}>
+          <div style={{ marginBottom: '1.5rem' }}>
+            <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#111827' }}>Admin</div>
+            <div style={{ ...S.muted, marginTop: '2px' }}>Sign in to view analytics</div>
+          </div>
           <form onSubmit={handleLogin}>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter password"
-              style={{ width: '100%', padding: '0.75rem', marginBottom: '1rem', border: '2px solid #e0e0e0', borderRadius: '8px', fontSize: '1rem' }}
+              placeholder="Password"
               autoFocus
+              style={{ display: 'block', width: '100%', padding: '0.625rem 0.75rem', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '0.9rem', marginBottom: '0.75rem', outline: 'none', boxSizing: 'border-box' }}
             />
             <button
               type="submit"
-              style={{ width: '100%', padding: '0.75rem', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '1rem', fontWeight: 'bold', cursor: 'pointer' }}
+              style={{ width: '100%', padding: '0.625rem', background: '#111827', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' }}
             >
-              Login
+              Sign in
             </button>
           </form>
           <button
             onClick={() => navigate('/')}
-            style={{ width: '100%', padding: '0.75rem', marginTop: '1rem', background: 'transparent', color: '#666', border: '1px solid #e0e0e0', borderRadius: '8px', fontSize: '0.9rem', cursor: 'pointer' }}
+            style={{ display: 'block', width: '100%', marginTop: '0.75rem', padding: '0.625rem', background: 'transparent', color: '#6b7280', border: '1px solid #e5e7eb', borderRadius: '6px', fontSize: '0.875rem', cursor: 'pointer' }}
           >
-            Back to Home
+            ← Back to site
           </button>
         </div>
       </div>
     )
   }
 
+  // ── Dashboard ─────────────────────────────────────────────────────────────
   return (
-    <div className="page gradient-love" style={{ minHeight: '100vh', padding: '2rem' }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+    <div style={S.page}>
+      <div style={S.container}>
 
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-          <h1 style={{ color: 'white', fontSize: '2rem' }}>Admin Dashboard</h1>
+        <div style={{ ...S.row, marginBottom: '1.75rem' }}>
+          <div>
+            <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#111827' }}>Analytics</div>
+            <div style={{ ...S.muted, marginTop: '2px' }}>lovestruck-again</div>
+          </div>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <button
               onClick={fetchVisits}
               disabled={loading}
-              style={{ padding: '0.5rem 1rem', background: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
+              style={{ padding: '0.5rem 0.875rem', background: '#fff', border: '1px solid #e5e7eb', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 500, color: '#374151', cursor: 'pointer' }}
             >
-              {loading ? 'Refreshing...' : 'Refresh'}
+              {loading ? 'Loading…' : 'Refresh'}
             </button>
             <button
               onClick={() => navigate('/')}
-              style={{ padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.2)', color: 'white', border: '1px solid white', borderRadius: '8px', cursor: 'pointer' }}
+              style={{ padding: '0.5rem 0.875rem', background: '#fff', border: '1px solid #e5e7eb', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 500, color: '#374151', cursor: 'pointer' }}
             >
-              Home
+              ← Site
             </button>
           </div>
         </div>
 
-        {/* Period Selector */}
-        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+        {/* Period tabs */}
+        <div style={{ display: 'flex', gap: '0', marginBottom: '1.75rem', background: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '4px', width: 'fit-content' }}>
           {PERIODS.map(({ label, value }) => (
             <button
               key={value}
               onClick={() => setPeriod(value)}
               style={{
-                padding: '0.5rem 1.25rem',
-                borderRadius: '20px',
+                padding: '0.375rem 0.875rem',
+                borderRadius: '5px',
                 border: 'none',
                 cursor: 'pointer',
-                fontWeight: period === value ? 'bold' : 'normal',
-                background: period === value ? 'white' : 'rgba(255,255,255,0.3)',
-                color: period === value ? '#333' : 'white',
-                fontSize: '0.9rem',
-                transition: 'all 0.15s',
+                fontSize: '0.8rem',
+                fontWeight: period === value ? 600 : 400,
+                background: period === value ? '#111827' : 'transparent',
+                color: period === value ? '#fff' : '#6b7280',
+                transition: 'all 0.12s',
               }}
             >
               {label}
@@ -216,186 +264,113 @@ export default function Admin() {
           ))}
         </div>
 
-        {/* Summary Stats */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
-          {[
-            { label: 'Total Events', value: stats.total },
-            { label: 'Today', value: stats.today },
-            { label: 'This Week', value: stats.thisWeek },
-            { label: 'Unique Pages', value: Object.keys(stats.byPath).length },
-          ].map(({ label, value }) => (
-            <div key={label} style={{ background: 'white', padding: '1.25rem', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-              <div style={{ fontSize: '0.75rem', color: '#888', marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
-              <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#333' }}>{value}</div>
-            </div>
-          ))}
+        {/* Summary stats — 4 cols */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.75rem', marginBottom: '0.75rem' }}>
+          <StatCard label="Total Events" value={stats.total} />
+          <StatCard label="Today" value={stats.today} />
+          <StatCard label="This Week" value={stats.thisWeek} />
+          <StatCard label="Unique Pages" value={Object.keys(stats.byPath).length} />
         </div>
 
-        {/* Game Stats */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
-          {[
-            { label: 'Games Completed', value: stats.gamesCompleted, color: '#27ae60' },
-            { label: 'Solo Completed', value: stats.soloCompleted, color: '#3498db' },
-            { label: 'Couples Completed', value: stats.couplesCompleted, color: '#9b59b6' },
-            { label: 'Solo Shares', value: stats.soloShared, color: '#e74c3c' },
-            { label: 'Couples Shares', value: stats.couplesShared, color: '#e67e22' },
-          ].map(({ label, value, color }) => (
-            <div key={label} style={{ background: 'white', padding: '1.25rem', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', borderTop: `3px solid ${color}` }}>
-              <div style={{ fontSize: '0.75rem', color: '#888', marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
-              <div style={{ fontSize: '2rem', fontWeight: 'bold', color }}>{value}</div>
-            </div>
-          ))}
+        {/* Game stats — 5 cols with colour accents */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.75rem', marginBottom: '1.5rem' }}>
+          <StatCard label="Games Completed" value={stats.gamesCompleted} accent="#16a34a" />
+          <StatCard label="Solo Completed"   value={stats.soloCompleted}   accent="#2563eb" />
+          <StatCard label="Couples Completed" value={stats.couplesCompleted} accent="#9333ea" />
+          <StatCard label="Solo Shares"      value={stats.soloShared}      accent="#dc2626" />
+          <StatCard label="Couples Shares"   value={stats.couplesShared}   accent="#d97706" />
         </div>
 
-        {/* Events by Type + Visits by Page + Traffic Sources */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+        {/* Three breakdown panels */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '0.75rem', marginBottom: '1.5rem' }}>
 
-          <div style={{ background: 'white', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-            <h2 style={{ marginBottom: '1rem', fontSize: '1.1rem', color: '#333' }}>Events by Type</h2>
-            <div style={{ display: 'grid', gap: '0.4rem' }}>
-              {Object.entries(stats.byEventType).length === 0
-                ? <p style={{ color: '#999', fontSize: '0.875rem' }}>No events in this period</p>
-                : Object.entries(stats.byEventType)
-                    .sort((a, b) => b[1] - a[1])
-                    .map(([eventType, count]) => {
-                      const pct = Math.round((count / stats.total) * 100)
-                      return (
-                        <div key={eventType}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
-                            <span style={{ color: '#333', fontFamily: 'monospace', fontSize: '0.85rem' }}>{eventType}</span>
-                            <span style={{ fontWeight: 'bold', color: '#666', fontSize: '0.85rem' }}>{count} <span style={{ color: '#aaa', fontWeight: 'normal' }}>({pct}%)</span></span>
-                          </div>
-                          <div style={{ height: '4px', background: '#f0f0f0', borderRadius: '2px' }}>
-                            <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg, #667eea, #764ba2)', borderRadius: '2px' }} />
-                          </div>
-                        </div>
-                      )
-                    })}
-            </div>
+          <div style={S.card}>
+            <div style={S.sectionTitle}>Events by Type</div>
+            {Object.entries(stats.byEventType).length === 0
+              ? <div style={S.muted}>No events in this period</div>
+              : Object.entries(stats.byEventType).sort((a, b) => b[1] - a[1]).map(([et, count]) => (
+                  <BarRow key={et} label={et} count={count} total={stats.total} fill="#111827" />
+                ))}
           </div>
 
-          <div style={{ background: 'white', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-            <h2 style={{ marginBottom: '1rem', fontSize: '1.1rem', color: '#333' }}>Visits by Page</h2>
-            <div style={{ display: 'grid', gap: '0.4rem' }}>
-              {Object.entries(stats.byPath).length === 0
-                ? <p style={{ color: '#999', fontSize: '0.875rem' }}>No visits in this period</p>
-                : Object.entries(stats.byPath)
-                    .sort((a, b) => b[1] - a[1])
-                    .map(([path, count]) => {
-                      const pct = Math.round((count / stats.total) * 100)
-                      return (
-                        <div key={path}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
-                            <span style={{ color: '#333', fontFamily: 'monospace', fontSize: '0.85rem' }}>{path}</span>
-                            <span style={{ fontWeight: 'bold', color: '#666', fontSize: '0.85rem' }}>{count} <span style={{ color: '#aaa', fontWeight: 'normal' }}>({pct}%)</span></span>
-                          </div>
-                          <div style={{ height: '4px', background: '#f0f0f0', borderRadius: '2px' }}>
-                            <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg, #f093fb, #f5576c)', borderRadius: '2px' }} />
-                          </div>
-                        </div>
-                      )
-                    })}
-            </div>
+          <div style={S.card}>
+            <div style={S.sectionTitle}>Visits by Page</div>
+            {Object.entries(stats.byPath).length === 0
+              ? <div style={S.muted}>No visits in this period</div>
+              : Object.entries(stats.byPath).sort((a, b) => b[1] - a[1]).map(([path, count]) => (
+                  <BarRow key={path} label={path} count={count} total={stats.total} fill="#2563eb" />
+                ))}
           </div>
 
-          <div style={{ background: 'white', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-            <h2 style={{ marginBottom: '1rem', fontSize: '1.1rem', color: '#333' }}>Traffic Sources</h2>
-            <div style={{ display: 'grid', gap: '0.4rem' }}>
-              {Object.entries(stats.byReferrer).length === 0
-                ? <p style={{ color: '#999', fontSize: '0.875rem' }}>No data in this period</p>
-                : Object.entries(stats.byReferrer)
-                    .sort((a, b) => b[1] - a[1])
-                    .map(([source, count]) => {
-                      const pct = Math.round((count / stats.total) * 100)
-                      return (
-                        <div key={source}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
-                            <span style={{ color: '#333', fontSize: '0.85rem' }}>{source}</span>
-                            <span style={{ fontWeight: 'bold', color: '#666', fontSize: '0.85rem' }}>{count} <span style={{ color: '#aaa', fontWeight: 'normal' }}>({pct}%)</span></span>
-                          </div>
-                          <div style={{ height: '4px', background: '#f0f0f0', borderRadius: '2px' }}>
-                            <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg, #43e97b, #38f9d7)', borderRadius: '2px' }} />
-                          </div>
-                        </div>
-                      )
-                    })}
-            </div>
+          <div style={S.card}>
+            <div style={S.sectionTitle}>Traffic Sources</div>
+            {Object.entries(stats.byReferrer).length === 0
+              ? <div style={S.muted}>No data in this period</div>
+              : Object.entries(stats.byReferrer).sort((a, b) => b[1] - a[1]).map(([src, count]) => (
+                  <BarRow key={src} label={src} count={count} total={stats.total} fill="#16a34a" />
+                ))}
           </div>
         </div>
 
-        {/* Recent Events Table */}
-        <div style={{ background: 'white', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-          <h2 style={{ marginBottom: '1rem', fontSize: '1.1rem', color: '#333' }}>
-            Recent Events <span style={{ color: '#aaa', fontWeight: 'normal', fontSize: '0.9rem' }}>({filteredVisits.length} in period)</span>
-          </h2>
+        {/* Recent events table */}
+        <div style={S.card}>
+          <div style={{ ...S.row, marginBottom: '1rem' }}>
+            <div style={S.sectionTitle}>Recent Events</div>
+            <div style={S.muted}>{filteredVisits.length} in period</div>
+          </div>
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
               <thead>
-                <tr style={{ borderBottom: '2px solid #e0e0e0' }}>
-                  <th style={{ padding: '0.6rem 0.75rem', textAlign: 'left', color: '#666', whiteSpace: 'nowrap' }}>Time</th>
-                  <th style={{ padding: '0.6rem 0.75rem', textAlign: 'left', color: '#666', whiteSpace: 'nowrap' }}>Event</th>
-                  <th style={{ padding: '0.6rem 0.75rem', textAlign: 'left', color: '#666', whiteSpace: 'nowrap' }}>Path</th>
-                  <th style={{ padding: '0.6rem 0.75rem', textAlign: 'left', color: '#666', whiteSpace: 'nowrap' }}>Metadata</th>
-                  <th style={{ padding: '0.6rem 0.75rem', textAlign: 'left', color: '#666', whiteSpace: 'nowrap' }}>Referrer</th>
+                <tr style={{ borderBottom: '1px solid #e5e7eb' }}>
+                  {['Time', 'Event', 'Path', 'Metadata', 'Referrer'].map(h => (
+                    <th key={h} style={{ padding: '0.5rem 0.75rem', textAlign: 'left', ...S.label, paddingBottom: '0.625rem' }}>{h}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
-                {filteredVisits.slice(0, 200).map((visit) => (
-                  <tr key={visit.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
-                    <td style={{ padding: '0.6rem 0.75rem', color: '#666', whiteSpace: 'nowrap', fontSize: '0.8rem' }}>
+                {filteredVisits.slice(0, 200).map((visit, i) => (
+                  <tr
+                    key={visit.id}
+                    style={{ borderBottom: '1px solid #f3f4f6', background: i % 2 === 0 ? '#fff' : '#fafafa' }}
+                  >
+                    <td style={{ padding: '0.5rem 0.75rem', color: '#9ca3af', whiteSpace: 'nowrap' }}>
                       {new Date(visit.created_at).toLocaleString()}
                     </td>
-                    <td style={{ padding: '0.6rem 0.75rem' }}>
+                    <td style={{ padding: '0.5rem 0.75rem' }}>
                       <span style={{
-                        display: 'inline-block',
-                        padding: '2px 8px',
-                        borderRadius: '10px',
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        background: eventTypeColor(visit.event_type).bg,
-                        color: eventTypeColor(visit.event_type).text,
+                        display: 'inline-block', padding: '2px 7px', borderRadius: '4px',
+                        fontSize: '0.72rem', fontWeight: 600,
+                        background: eventBadge(visit.event_type).bg,
+                        color: eventBadge(visit.event_type).color,
                         whiteSpace: 'nowrap',
                       }}>
                         {visit.event_type || 'page_visit'}
                       </span>
                     </td>
-                    <td style={{ padding: '0.6rem 0.75rem', color: '#333', fontFamily: 'monospace', fontSize: '0.8rem' }}>
+                    <td style={{ padding: '0.5rem 0.75rem', fontFamily: 'monospace', color: '#374151' }}>
                       {visit.path}
                     </td>
-                    <td style={{ padding: '0.6rem 0.75rem', color: '#666', fontSize: '0.78rem', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <td style={{ padding: '0.5rem 0.75rem', color: '#6b7280', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {visit.metadata && Object.keys(visit.metadata).length > 0
                         ? Object.entries(visit.metadata).map(([k, v]) => `${k}: ${v}`).join(', ')
-                        : '—'}
+                        : <span style={{ color: '#d1d5db' }}>—</span>}
                     </td>
-                    <td style={{ padding: '0.6rem 0.75rem', color: '#999', fontSize: '0.78rem', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {visit.referrer || '(direct)'}
+                    <td style={{ padding: '0.5rem 0.75rem', color: '#9ca3af', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {visit.referrer || <span style={{ color: '#d1d5db' }}>(direct)</span>}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
             {filteredVisits.length > 200 && (
-              <p style={{ textAlign: 'center', color: '#aaa', marginTop: '1rem', fontSize: '0.875rem' }}>
+              <div style={{ textAlign: 'center', padding: '1rem', ...S.muted }}>
                 Showing 200 of {filteredVisits.length} events
-              </p>
+              </div>
             )}
           </div>
         </div>
+
       </div>
     </div>
   )
-}
-
-function eventTypeColor(type: string): { bg: string; text: string } {
-  const map: Record<string, { bg: string; text: string }> = {
-    page_visit:    { bg: '#e8f4fd', text: '#1a73e8' },
-    quiz_start:    { bg: '#fef3e2', text: '#e67e22' },
-    quiz_complete: { bg: '#e8f8f0', text: '#27ae60' },
-    letter_create: { bg: '#fdf0f8', text: '#9b59b6' },
-    letter_send:   { bg: '#f0f0fd', text: '#5856d6' },
-    letter_open:   { bg: '#e8fdf5', text: '#1abc9c' },
-    share_click:   { bg: '#fdecea', text: '#e74c3c' },
-    download_click:{ bg: '#fef9e7', text: '#f39c12' },
-  }
-  return map[type] ?? { bg: '#f0f0f0', text: '#666' }
 }
