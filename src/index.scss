@@ -452,11 +452,12 @@ html {
 }
 
 .subtitle {
-  // color: rgba(255, 255, 255, 0.9);
-  color:$gray-800;
+  color: #3A3737;
   font-size: 1.25rem;
   margin-bottom: 48px;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', system-ui, sans-serif;
+  font-weight: 500;
 }
 
 .home-credits{
