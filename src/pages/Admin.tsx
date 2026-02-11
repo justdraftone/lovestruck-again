@@ -77,7 +77,7 @@ function AreaChart({ points, color }: { points: number[]; color: string }) {
   const gradId = `g${color.replace(/[^a-z0-9]/gi, '')}`
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ width: '100%', height: '80px', display: 'block', margin: '0 -2px' }}>
+    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ width: '100%', height: '200px', display: 'block', margin: '0 -2px' }}>
       <defs>
         <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%"   stopColor={color} stopOpacity="0.30" />
