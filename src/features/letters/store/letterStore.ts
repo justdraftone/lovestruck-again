@@ -8,12 +8,15 @@ export interface ImageData {
   rotation: number;
 }
 
+export type StickerData = ImageData;
+
 export interface Letter {
   id: string;
   recipientName: string;
   senderName: string;
   content: string;
   image?: ImageData;
+  sticker?: StickerData;
   createdAt: number;
 }
 
@@ -22,7 +25,7 @@ interface LetterStore {
   currentLetter: Letter | null;
 
   // Actions
-  createLetter: (content: string, recipientName: string, senderName: string, image?: ImageData) => string;
+  createLetter: (content: string, recipientName: string, senderName: string, image?: ImageData, sticker?: StickerData) => string;
   setRecipientName: (id: string, name: string) => void;
   getLetter: (id: string) => Letter | null;
   setCurrentLetter: (letter: Letter | null) => void;
@@ -45,7 +48,7 @@ export const useLetterStore = create<LetterStore>()(
       letters: {},
       currentLetter: null,
 
-      createLetter: (content: string, recipientName: string, senderName: string, image?: ImageData) => {
+      createLetter: (content: string, recipientName: string, senderName: string, image?: ImageData, sticker?: StickerData) => {
         const id = generateLetterId();
         const letter: Letter = {
           id,
@@ -53,6 +56,7 @@ export const useLetterStore = create<LetterStore>()(
           senderName,
           content,
           image,
+          sticker,
           createdAt: Date.now(),
         };
         set((state) => ({

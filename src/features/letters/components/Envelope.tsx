@@ -1,15 +1,18 @@
 import { useState, useRef } from 'react';
 
+interface PositionedAsset {
+  src: string;
+  position: { x: number; y: number };
+  size: { width: number; height: number };
+  rotation: number;
+}
+
 interface EnvelopeProps {
   recipientName?: string;
   content: string;
   senderName?: string;
-  imageData?: {
-    src: string;
-    position: { x: number; y: number };
-    size: { width: number; height: number };
-    rotation: number;
-  };
+  imageData?: PositionedAsset;
+  stickerData?: PositionedAsset;
   onAnimationComplete?: () => void;
 }
 
@@ -23,6 +26,7 @@ export default function Envelope({
   content,
   senderName,
   imageData,
+  stickerData,
   onAnimationComplete
 }: EnvelopeProps) {
   const [stage, setStage] = useState<AnimationStage>('closed');
@@ -98,6 +102,22 @@ export default function Envelope({
                 }}
               >
                 <img src={imageData.src} alt="Attached" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+            )}
+            {stickerData && (
+              <div
+                className="letter-paper__sticker"
+                style={{
+                  position: 'absolute',
+                  left: `${stickerData.position.x}px`,
+                  top: `${stickerData.position.y}px`,
+                  width: `${stickerData.size.width}px`,
+                  height: `${stickerData.size.height}px`,
+                  transform: `rotate(${stickerData.rotation}deg)`,
+                  pointerEvents: 'none'
+                }}
+              >
+                <img src={stickerData.src} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
               </div>
             )}
           </div>
