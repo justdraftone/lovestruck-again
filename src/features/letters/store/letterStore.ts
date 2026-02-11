@@ -16,7 +16,7 @@ export interface Letter {
   senderName: string;
   content: string;
   image?: ImageData;
-  sticker?: StickerData;
+  stickers?: StickerData[];
   createdAt: number;
 }
 
@@ -25,7 +25,7 @@ interface LetterStore {
   currentLetter: Letter | null;
 
   // Actions
-  createLetter: (content: string, recipientName: string, senderName: string, image?: ImageData, sticker?: StickerData) => string;
+  createLetter: (content: string, recipientName: string, senderName: string, image?: ImageData, stickers?: StickerData[]) => string;
   setRecipientName: (id: string, name: string) => void;
   getLetter: (id: string) => Letter | null;
   setCurrentLetter: (letter: Letter | null) => void;
@@ -48,7 +48,7 @@ export const useLetterStore = create<LetterStore>()(
       letters: {},
       currentLetter: null,
 
-      createLetter: (content: string, recipientName: string, senderName: string, image?: ImageData, sticker?: StickerData) => {
+      createLetter: (content: string, recipientName: string, senderName: string, image?: ImageData, stickers?: StickerData[]) => {
         const id = generateLetterId();
         const letter: Letter = {
           id,
@@ -56,7 +56,7 @@ export const useLetterStore = create<LetterStore>()(
           senderName,
           content,
           image,
-          sticker,
+          stickers,
           createdAt: Date.now(),
         };
         set((state) => ({

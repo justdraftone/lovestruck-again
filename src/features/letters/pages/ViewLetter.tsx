@@ -45,7 +45,7 @@ export default function ViewLetter() {
             content={letter.content}
             senderName={letter.senderName}
             imageData={letter.image}
-            stickerData={letter.sticker}
+            stickers={letter.stickers}
             onAnimationComplete={handleAnimationComplete}
           />
         </div>

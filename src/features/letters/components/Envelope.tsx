@@ -12,7 +12,7 @@ interface EnvelopeProps {
   content: string;
   senderName?: string;
   imageData?: PositionedAsset;
-  stickerData?: PositionedAsset;
+  stickers?: PositionedAsset[];
   onAnimationComplete?: () => void;
 }
 
@@ -26,7 +26,7 @@ export default function Envelope({
   content,
   senderName,
   imageData,
-  stickerData,
+  stickers,
   onAnimationComplete
 }: EnvelopeProps) {
   const [stage, setStage] = useState<AnimationStage>('closed');
@@ -104,22 +104,23 @@ export default function Envelope({
                 <img src={imageData.src} alt="Attached" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </div>
             )}
-            {stickerData && (
+            {stickers?.map((sd, i) => (
               <div
+                key={i}
                 className="letter-paper__sticker"
                 style={{
                   position: 'absolute',
-                  left: `${stickerData.position.x}px`,
-                  top: `${stickerData.position.y}px`,
-                  width: `${stickerData.size.width}px`,
-                  height: `${stickerData.size.height}px`,
-                  transform: `rotate(${stickerData.rotation}deg)`,
+                  left: `${sd.position.x}px`,
+                  top: `${sd.position.y}px`,
+                  width: `${sd.size.width}px`,
+                  height: `${sd.size.height}px`,
+                  transform: `rotate(${sd.rotation}deg)`,
                   pointerEvents: 'none'
                 }}
               >
-                <img src={stickerData.src} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                <img src={sd.src} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
               </div>
-            )}
+            ))}
           </div>
         </div>
       </div>

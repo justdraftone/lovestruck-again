@@ -7,7 +7,17 @@ const STICKERS = [
   { src: '/assets/illos/heart-red.svg', label: 'Red heart' },
   { src: '/assets/illos/heart-gold.svg', label: 'Gold heart' },
   { src: '/assets/illos/heart-ball.svg', label: 'Heart ball' },
+  { src: '/assets/results/heart-fire.svg', label: 'Heart fire' },
+  { src: '/assets/results/heart-pizza.svg', label: 'Heart pizza' },
 ];
+
+interface StickerItem {
+  id: string;
+  src: string;
+  position: { x: number; y: number };
+  size: { width: number; height: number };
+  rotation: number;
+}
 
 export default function CreateLetter() {
   const navigate = useNavigate();
@@ -28,11 +38,9 @@ export default function CreateLetter() {
   const [resizeStart, setResizeStart] = useState({ width: 0, height: 0, x: 0, y: 0 });
   const [rotateStart, setRotateStart] = useState({ angle: 0, x: 0, y: 0 });
 
-  // Sticker state
-  const [sticker, setSticker] = useState<string | undefined>();
-  const [stickerPosition, setStickerPosition] = useState({ x: 180, y: 160 });
-  const [stickerSize, setStickerSize] = useState({ width: 100, height: 100 });
-  const [stickerRotation, setStickerRotation] = useState(0);
+  // Stickers array state
+  const [stickers, setStickers] = useState<StickerItem[]>([]);
+  const [activeStickerIndex, setActiveStickerIndex] = useState<number | null>(null);
   const [isStickerDragging, setIsStickerDragging] = useState(false);
   const [isStickerResizing, setIsStickerResizing] = useState(false);
   const [isStickerRotating, setIsStickerRotating] = useState(false);
@@ -41,6 +49,10 @@ export default function CreateLetter() {
   const [stickerRotateStart, setStickerRotateStart] = useState({ angle: 0, x: 0, y: 0 });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const updateSticker = (index: number, updates: Partial<StickerItem>) => {
+    setStickers(prev => prev.map((s, i) => i === index ? { ...s, ...updates } : s));
+  };
 
   // --- Image handlers ---
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -107,57 +119,74 @@ export default function CreateLetter() {
 
   // --- Sticker handlers ---
   const handleStickerSelect = (src: string) => {
-    setSticker(src);
-    setStickerPosition({ x: 180, y: 160 });
-    setStickerSize({ width: 100, height: 100 });
-    setStickerRotation(0);
+    const offset = stickers.length * 24;
+    const newSticker: StickerItem = {
+      id: `${Date.now()}-${Math.random()}`,
+      src,
+      position: { x: 160 + offset, y: 160 + offset },
+      size: { width: 100, height: 100 },
+      rotation: 0,
+    };
+    setStickers(prev => [...prev, newSticker]);
+    setActiveStickerIndex(stickers.length);
   };
 
-  const handleRemoveSticker = () => { setSticker(undefined); };
+  const handleRemoveSticker = (index: number) => {
+    setStickers(prev => prev.filter((_, i) => i !== index));
+    setActiveStickerIndex(null);
+  };
 
-  const handleStickerMouseDown = (e: React.MouseEvent) => {
+  const handleStickerMouseDown = (e: React.MouseEvent, index: number) => {
     e.stopPropagation();
+    setActiveStickerIndex(index);
     setIsStickerDragging(true);
-    setStickerDragOffset({ x: e.clientX - stickerPosition.x, y: e.clientY - stickerPosition.y });
+    setStickerDragOffset({ x: e.clientX - stickers[index].position.x, y: e.clientY - stickers[index].position.y });
   };
 
-  const handleStickerTouchStart = (e: React.TouchEvent) => {
+  const handleStickerTouchStart = (e: React.TouchEvent, index: number) => {
     e.preventDefault(); e.stopPropagation();
     const touch = e.touches[0];
+    setActiveStickerIndex(index);
     setIsStickerDragging(true);
-    setStickerDragOffset({ x: touch.clientX - stickerPosition.x, y: touch.clientY - stickerPosition.y });
+    setStickerDragOffset({ x: touch.clientX - stickers[index].position.x, y: touch.clientY - stickers[index].position.y });
   };
 
-  const handleStickerResizeMouseDown = (e: React.MouseEvent) => {
+  const handleStickerResizeMouseDown = (e: React.MouseEvent, index: number) => {
     e.preventDefault(); e.stopPropagation();
+    setActiveStickerIndex(index);
     setIsStickerDragging(false); setIsStickerResizing(true);
-    setStickerResizeStart({ width: stickerSize.width, height: stickerSize.height, x: e.clientX, y: e.clientY });
+    setStickerResizeStart({ width: stickers[index].size.width, height: stickers[index].size.height, x: e.clientX, y: e.clientY });
   };
 
-  const handleStickerResizeTouchStart = (e: React.TouchEvent) => {
+  const handleStickerResizeTouchStart = (e: React.TouchEvent, index: number) => {
     e.preventDefault(); e.stopPropagation();
     const touch = e.touches[0];
+    setActiveStickerIndex(index);
     setIsStickerDragging(false); setIsStickerResizing(true);
-    setStickerResizeStart({ width: stickerSize.width, height: stickerSize.height, x: touch.clientX, y: touch.clientY });
+    setStickerResizeStart({ width: stickers[index].size.width, height: stickers[index].size.height, x: touch.clientX, y: touch.clientY });
   };
 
-  const handleStickerRotateMouseDown = (e: React.MouseEvent) => {
+  const handleStickerRotateMouseDown = (e: React.MouseEvent, index: number) => {
     e.preventDefault(); e.stopPropagation();
+    setActiveStickerIndex(index);
     setIsStickerDragging(false); setIsStickerRotating(true);
-    const centerX = stickerPosition.x + stickerSize.width / 2;
-    const centerY = stickerPosition.y + stickerSize.height / 2;
+    const s = stickers[index];
+    const centerX = s.position.x + s.size.width / 2;
+    const centerY = s.position.y + s.size.height / 2;
     const angle = Math.atan2(e.clientY - centerY, e.clientX - centerX) * 180 / Math.PI;
-    setStickerRotateStart({ angle: angle - stickerRotation, x: centerX, y: centerY });
+    setStickerRotateStart({ angle: angle - s.rotation, x: centerX, y: centerY });
   };
 
-  const handleStickerRotateTouchStart = (e: React.TouchEvent) => {
+  const handleStickerRotateTouchStart = (e: React.TouchEvent, index: number) => {
     e.preventDefault(); e.stopPropagation();
     const touch = e.touches[0];
+    setActiveStickerIndex(index);
     setIsStickerDragging(false); setIsStickerRotating(true);
-    const centerX = stickerPosition.x + stickerSize.width / 2;
-    const centerY = stickerPosition.y + stickerSize.height / 2;
+    const s = stickers[index];
+    const centerX = s.position.x + s.size.width / 2;
+    const centerY = s.position.y + s.size.height / 2;
     const angle = Math.atan2(touch.clientY - centerY, touch.clientX - centerX) * 180 / Math.PI;
-    setStickerRotateStart({ angle: angle - stickerRotation, x: centerX, y: centerY });
+    setStickerRotateStart({ angle: angle - s.rotation, x: centerX, y: centerY });
   };
 
   // --- Shared move/up handlers ---
@@ -170,14 +199,16 @@ export default function CreateLetter() {
     } else if (isRotating) {
       const angle = Math.atan2(e.clientY - rotateStart.y, e.clientX - rotateStart.x) * 180 / Math.PI;
       setImageRotation(angle - rotateStart.angle);
-    } else if (isStickerDragging) {
-      setStickerPosition({ x: e.clientX - stickerDragOffset.x, y: e.clientY - stickerDragOffset.y });
-    } else if (isStickerResizing) {
-      const delta = Math.max(e.clientX - stickerResizeStart.x, e.clientY - stickerResizeStart.y);
-      setStickerSize({ width: Math.max(40, stickerResizeStart.width + delta), height: Math.max(40, stickerResizeStart.height + delta) });
-    } else if (isStickerRotating) {
-      const angle = Math.atan2(e.clientY - stickerRotateStart.y, e.clientX - stickerRotateStart.x) * 180 / Math.PI;
-      setStickerRotation(angle - stickerRotateStart.angle);
+    } else if (activeStickerIndex !== null) {
+      if (isStickerDragging) {
+        updateSticker(activeStickerIndex, { position: { x: e.clientX - stickerDragOffset.x, y: e.clientY - stickerDragOffset.y } });
+      } else if (isStickerResizing) {
+        const delta = Math.max(e.clientX - stickerResizeStart.x, e.clientY - stickerResizeStart.y);
+        updateSticker(activeStickerIndex, { size: { width: Math.max(40, stickerResizeStart.width + delta), height: Math.max(40, stickerResizeStart.height + delta) } });
+      } else if (isStickerRotating) {
+        const angle = Math.atan2(e.clientY - stickerRotateStart.y, e.clientX - stickerRotateStart.x) * 180 / Math.PI;
+        updateSticker(activeStickerIndex, { rotation: angle - stickerRotateStart.angle });
+      }
     }
   };
 
@@ -194,14 +225,16 @@ export default function CreateLetter() {
     } else if (isRotating) {
       const angle = Math.atan2(touch.clientY - rotateStart.y, touch.clientX - rotateStart.x) * 180 / Math.PI;
       setImageRotation(angle - rotateStart.angle);
-    } else if (isStickerDragging) {
-      setStickerPosition({ x: touch.clientX - stickerDragOffset.x, y: touch.clientY - stickerDragOffset.y });
-    } else if (isStickerResizing) {
-      const delta = Math.max(touch.clientX - stickerResizeStart.x, touch.clientY - stickerResizeStart.y);
-      setStickerSize({ width: Math.max(40, stickerResizeStart.width + delta), height: Math.max(40, stickerResizeStart.height + delta) });
-    } else if (isStickerRotating) {
-      const angle = Math.atan2(touch.clientY - stickerRotateStart.y, touch.clientX - stickerRotateStart.x) * 180 / Math.PI;
-      setStickerRotation(angle - stickerRotateStart.angle);
+    } else if (activeStickerIndex !== null) {
+      if (isStickerDragging) {
+        updateSticker(activeStickerIndex, { position: { x: touch.clientX - stickerDragOffset.x, y: touch.clientY - stickerDragOffset.y } });
+      } else if (isStickerResizing) {
+        const delta = Math.max(touch.clientX - stickerResizeStart.x, touch.clientY - stickerResizeStart.y);
+        updateSticker(activeStickerIndex, { size: { width: Math.max(40, stickerResizeStart.width + delta), height: Math.max(40, stickerResizeStart.height + delta) } });
+      } else if (isStickerRotating) {
+        const angle = Math.atan2(touch.clientY - stickerRotateStart.y, touch.clientX - stickerRotateStart.x) * 180 / Math.PI;
+        updateSticker(activeStickerIndex, { rotation: angle - stickerRotateStart.angle });
+      }
     }
   };
 
@@ -218,9 +251,11 @@ export default function CreateLetter() {
   const handleDone = () => {
     if (!content.trim()) return;
     const imageData = image ? { src: image, position: imagePosition, size: imageSize, rotation: imageRotation } : undefined;
-    const stickerData = sticker ? { src: sticker, position: stickerPosition, size: stickerSize, rotation: stickerRotation } : undefined;
-    const letterId = createLetter(content.trim(), recipientName.trim(), senderName.trim(), imageData, stickerData);
-    trackEvent('letter_create', { metadata: { hasImage: !!image, hasSticker: !!sticker, letterId } });
+    const stickerDatas = stickers.length > 0
+      ? stickers.map(s => ({ src: s.src, position: s.position, size: s.size, rotation: s.rotation }))
+      : undefined;
+    const letterId = createLetter(content.trim(), recipientName.trim(), senderName.trim(), imageData, stickerDatas);
+    trackEvent('letter_create', { metadata: { hasImage: !!image, stickerCount: stickers.length, letterId } });
     navigate(`/letters/send/${letterId}`);
   };
 
@@ -292,27 +327,28 @@ export default function CreateLetter() {
                 </div>
               )}
 
-              {sticker && (
+              {stickers.map((s, index) => (
                 <div
+                  key={s.id}
                   className="letter-create__sticker-preview"
-                  style={{ position: 'absolute', left: `${stickerPosition.x}px`, top: `${stickerPosition.y}px`, width: `${stickerSize.width}px`, height: `${stickerSize.height}px`, transform: `rotate(${stickerRotation}deg)`, cursor: isStickerDragging ? 'grabbing' : 'grab' }}
-                  onMouseDown={handleStickerMouseDown}
-                  onTouchStart={handleStickerTouchStart}
+                  style={{ position: 'absolute', left: `${s.position.x}px`, top: `${s.position.y}px`, width: `${s.size.width}px`, height: `${s.size.height}px`, transform: `rotate(${s.rotation}deg)`, cursor: isStickerDragging && activeStickerIndex === index ? 'grabbing' : 'grab', zIndex: activeStickerIndex === index ? 10 : 5 }}
+                  onMouseDown={(e) => handleStickerMouseDown(e, index)}
+                  onTouchStart={(e) => handleStickerTouchStart(e, index)}
                 >
-                  <img src={sticker} alt="Sticker" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }} />
-                  <div className="letter-create__resize-handle" onMouseDown={handleStickerResizeMouseDown} onTouchStart={handleStickerResizeTouchStart} style={{ cursor: 'nwse-resize' }} />
-                  <div className="letter-create__rotate-handle" onMouseDown={handleStickerRotateMouseDown} onTouchStart={handleStickerRotateTouchStart} style={{ cursor: 'grab' }}>
+                  <img src={s.src} alt="Sticker" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }} />
+                  <div className="letter-create__resize-handle" onMouseDown={(e) => handleStickerResizeMouseDown(e, index)} onTouchStart={(e) => handleStickerResizeTouchStart(e, index)} style={{ cursor: 'nwse-resize' }} />
+                  <div className="letter-create__rotate-handle" onMouseDown={(e) => handleStickerRotateMouseDown(e, index)} onTouchStart={(e) => handleStickerRotateTouchStart(e, index)} style={{ cursor: 'grab' }}>
                     <svg width="16" height="16" fill="none" stroke="white" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
                   </div>
-                  <button onClick={handleRemoveSticker} className="letter-create__image-remove" aria-label="Remove sticker">
+                  <button onClick={() => handleRemoveSticker(index)} className="letter-create__image-remove" aria-label="Remove sticker">
                     <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
                 </div>
-              )}
+              ))}
             </div>
           </div>
 
@@ -322,7 +358,7 @@ export default function CreateLetter() {
               {STICKERS.map((s) => (
                 <button
                   key={s.src}
-                  className={`letter-create__sticker-option${sticker === s.src ? ' letter-create__sticker-option--active' : ''}`}
+                  className="letter-create__sticker-option"
                   onClick={() => handleStickerSelect(s.src)}
                   aria-label={s.label}
                 >
