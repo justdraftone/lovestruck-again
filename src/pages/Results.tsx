@@ -108,13 +108,12 @@ export default function Results() {
     navigate('/');
   };
 
-  // Show loading state
+  // Show loading state (should be very brief since we already showed 3s loader)
   if (isLoading) {
     return (
       <div className="page page--centered gradient-love">
         <div className="results-loader">
           <div className="results-loader__spinner"></div>
-          <p className="results-loader__text">Calculating your results...</p>
         </div>
       </div>
     );

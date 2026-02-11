@@ -188,7 +188,7 @@ export default function CouplesQuizLocal() {
 
   return (
     <div className="page gradient-love">
-      <div className="header header__couples-quiz-w-toggle">
+      <div className="header header__couples-quiz-w-toggle" style={{ display: isCalculating ? 'none' : 'flex' }}>
         <img src="../../public/assets/illos/d1-x-loveorlies.svg" alt="" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} />
         <div className="question-set-toggle">
           <button

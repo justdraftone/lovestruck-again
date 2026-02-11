@@ -453,7 +453,8 @@ export default function CouplesQuizRemote() {
         style={{
           ...((!isMyTurn && !showExplainer) ? { width: '100%' } : {}),
           position: 'relative',
-          zIndex: 200
+          zIndex: 200,
+          display: isCalculating ? 'none' : 'flex'
         }}
       >
         <img src="/assets/illos/d1-x-loveorlies.svg" alt="" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} />
