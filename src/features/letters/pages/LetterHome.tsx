@@ -34,6 +34,9 @@ export default function LetterHome() {
           <p className="letter-home__credits">
             Made with ❤️ by <a href="https://justdraftone.xyz/" target="_blank" rel="noopener noreferrer">draftone</a>
           </p>
+          <p className="letter-home__credits">
+            <a href="/privacy" style={{ textDecoration: 'underline' }}>Your letters are private and only accessible by the recipient.</a>
+          </p>
         </div>
 
       </div>

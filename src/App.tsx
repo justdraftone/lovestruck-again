@@ -20,6 +20,7 @@ import { detectQuestionSet } from './lib/geoDetect'
 import { useQuizStore } from './store/quizStore'
 import { useVisitTracking } from './hooks/useVisitTracking'
 import Admin from './pages/Admin'
+import Privacy from './pages/Privacy'
 
 function AppContent() {
   const setQuestionSet = useQuizStore((s) => s.setQuestionSet)
@@ -48,6 +49,7 @@ function AppContent() {
         <Route path="/results/:mode" element={<Results />} />
         <Route path="/card-editor" element={<CardEditor />} />
         <Route path="/admin" element={<Admin />} />
+        <Route path="/privacy" element={<Privacy />} />
 
         {/* Valentine's Letter Writer */}
         <Route path="/letters" element={<LetterHome />} />
