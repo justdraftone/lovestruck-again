@@ -11,6 +11,9 @@ interface Visit {
   metadata: Record<string, unknown>
   referrer: string | null
   user_agent: string
+  user_id: string | null
+  country: string | null
+  country_code: string | null
   created_at: string
 }
 
@@ -170,9 +173,19 @@ export default function Admin() {
       byReferrer[source] = (byReferrer[source] || 0) + 1
     })
 
+    // Unique users
+    const uniqueUsers = new Set(filteredVisits.map(v => v.user_id).filter(Boolean)).size
+
+    // Countries
+    const byCountry: Record<string, number> = {}
+    filteredVisits.forEach((visit) => {
+      const c = visit.country || '(unknown)'
+      byCountry[c] = (byCountry[c] || 0) + 1
+    })
+
     return {
       total: filteredVisits.length, today: todayCount, thisWeek: weekCount,
-      byPath, byEventType, byReferrer,
+      byPath, byEventType, byReferrer, byCountry, uniqueUsers,
       gamesCompleted, soloCompleted, couplesCompleted, soloShared, couplesShared,
     }
   }, [filteredVisits])
@@ -264,9 +277,10 @@ export default function Admin() {
           ))}
         </div>
 
-        {/* Summary stats — 4 cols */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.75rem', marginBottom: '0.75rem' }}>
+        {/* Summary stats — 5 cols */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.75rem', marginBottom: '0.75rem' }}>
           <StatCard label="Total Events" value={stats.total} />
+          <StatCard label="Unique Users" value={stats.uniqueUsers} />
           <StatCard label="Today" value={stats.today} />
           <StatCard label="This Week" value={stats.thisWeek} />
           <StatCard label="Unique Pages" value={Object.keys(stats.byPath).length} />
@@ -310,6 +324,15 @@ export default function Admin() {
                   <BarRow key={src} label={src} count={count} total={stats.total} fill="#16a34a" />
                 ))}
           </div>
+
+          <div style={S.card}>
+            <div style={S.sectionTitle}>Countries</div>
+            {Object.entries(stats.byCountry).length === 0
+              ? <div style={S.muted}>No data in this period</div>
+              : Object.entries(stats.byCountry).sort((a, b) => b[1] - a[1]).map(([country, count]) => (
+                  <BarRow key={country} label={country} count={count} total={stats.total} fill="#7c3aed" />
+                ))}
+          </div>
         </div>
 
         {/* Recent events table */}
@@ -322,7 +345,7 @@ export default function Admin() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid #e5e7eb' }}>
-                  {['Time', 'Event', 'Path', 'Metadata', 'Referrer'].map(h => (
+                  {['Time', 'Event', 'Path', 'Country', 'Metadata', 'Referrer'].map(h => (
                     <th key={h} style={{ padding: '0.5rem 0.75rem', textAlign: 'left', ...S.label, paddingBottom: '0.625rem' }}>{h}</th>
                   ))}
                 </tr>
@@ -349,6 +372,9 @@ export default function Admin() {
                     </td>
                     <td style={{ padding: '0.5rem 0.75rem', fontFamily: 'monospace', color: '#374151' }}>
                       {visit.path}
+                    </td>
+                    <td style={{ padding: '0.5rem 0.75rem', color: '#6b7280', whiteSpace: 'nowrap' }}>
+                      {visit.country || <span style={{ color: '#d1d5db' }}>—</span>}
                     </td>
                     <td style={{ padding: '0.5rem 0.75rem', color: '#6b7280', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {visit.metadata && Object.keys(visit.metadata).length > 0

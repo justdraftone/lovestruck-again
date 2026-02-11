@@ -73,11 +73,21 @@ CREATE TABLE IF NOT EXISTS visits (
   metadata JSONB DEFAULT '{}'::jsonb,
   referrer TEXT,
   user_agent TEXT,
+  user_id TEXT,
+  country TEXT,
+  country_code TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Add new columns if upgrading an existing table
+ALTER TABLE visits ADD COLUMN IF NOT EXISTS user_id TEXT;
+ALTER TABLE visits ADD COLUMN IF NOT EXISTS country TEXT;
+ALTER TABLE visits ADD COLUMN IF NOT EXISTS country_code TEXT;
+
 -- Create index for faster queries by date
 CREATE INDEX IF NOT EXISTS visits_created_at_idx ON visits(created_at DESC);
+CREATE INDEX IF NOT EXISTS visits_user_id_idx ON visits(user_id);
+CREATE INDEX IF NOT EXISTS visits_country_idx ON visits(country);
 
 -- Enable Row Level Security (RLS)
 ALTER TABLE visits ENABLE ROW LEVEL SECURITY;
