@@ -3001,7 +3001,7 @@ html {
   &__image-preview,
   &__sticker-preview {
     position: absolute;
-    outline: 2px solid #C2185B;
+    outline: 2px solid #F0DEB4;
     user-select: none;
     touch-action: none;
 
@@ -3013,7 +3013,7 @@ html {
     width: 10px;
     height: 10px;
     background: white;
-    border: 2px solid #C2185B;
+    border: 2px solid #F0DEB4;
     border-radius: 50%;
     z-index: 20;
 
@@ -3046,7 +3046,7 @@ html {
       transform: translateX(-50%);
       width: 2px;
       height: 14px;
-      background: #C2185B;
+      background: #F0DEB4;
     }
 
     &:hover { background: rgba(0, 0, 0, 0.9); }
