@@ -1,4 +1,6 @@
+import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { useLDClient } from 'launchdarkly-react-client-sdk'
 import Home from './pages/Home'
 import SoloQuiz from './pages/SoloQuiz'
 import CouplesModeSelect from './pages/CouplesModeSelect'
@@ -14,8 +16,26 @@ import {
   OpenLetter,
   ViewLetter
 } from './features/letters'
+import { detectQuestionSet } from './lib/geoDetect'
+import { useQuizStore } from './store/quizStore'
+import { useVisitTracking } from './hooks/useVisitTracking'
+import Admin from './pages/Admin'
 
 function App() {
+  const setQuestionSet = useQuizStore((s) => s.setQuestionSet)
+  const ldClient = useLDClient()
+
+  useVisitTracking()
+
+  useEffect(() => {
+    detectQuestionSet().then(setQuestionSet)
+  }, [])
+
+  useEffect(() => {
+    if (!ldClient) return
+    ldClient.track('source', { source: 'cursor' })
+  }, [ldClient])
+
   return (
     <BrowserRouter>
       <NoiseOverlay />
@@ -27,6 +47,7 @@ function App() {
         <Route path="/couples/remote" element={<CouplesQuizRemote />} />
         <Route path="/results/:mode" element={<Results />} />
         <Route path="/card-editor" element={<CardEditor />} />
+        <Route path="/admin" element={<Admin />} />
 
         {/* Valentine's Letter Writer */}
         <Route path="/letters" element={<LetterHome />} />

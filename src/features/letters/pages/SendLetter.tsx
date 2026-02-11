@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useLetterStore } from '../store/letterStore';
+import { trackEvent } from '../../../lib/analytics';
 
 export default function SendLetter() {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ export default function SendLetter() {
       navigate('/letters');
     } else {
       setLetter(foundLetter);
+      trackEvent('letter_send', { metadata: { letterId } });
     }
   }, [letterId, getLetter, navigate]);
 

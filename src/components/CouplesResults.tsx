@@ -5,6 +5,7 @@ import CompatibilityCard from './CompatibilityCard';
 import ValentinesCardCta from './ValentinesCardCta';
 import { getPersonaCardVars, couplesCardVars } from '../data/cardSettings';
 import { PersonaName } from '../data/personas';
+import { trackEvent } from '../lib/analytics';
 
 interface CouplesResultsProps {
   partner1Name: string;
@@ -77,6 +78,8 @@ export default function CouplesResults({
   const handleDownload = useCallback(async () => {
     if (!cardRef.current) return;
 
+    trackEvent('download_click', { metadata: { type: 'couples_result', cardIndex: shareCardIndex } });
+
     try {
       // Wait for fonts to load
       await document.fonts.ready;
@@ -109,7 +112,7 @@ export default function CouplesResults({
       const dataUrl = await toPng(cardRef.current, {
         quality: 1,
         pixelRatio: 3,
-        backgroundColor: null,
+        backgroundColor: undefined,
         cacheBust: true,
       });
 
@@ -126,13 +129,16 @@ export default function CouplesResults({
       console.error('Failed to generate image:', error);
       alert('Failed to download image. Please try again.');
     }
-  }, [partner1Name, partner2Name]);
+  }, [partner1Name, partner2Name, shareCardIndex]);
 
   const handleShare = useCallback(async () => {
+    const hasNativeShare = 'share' in navigator;
+    trackEvent('share_click', { metadata: { type: 'couples_result', method: hasNativeShare ? 'native' : 'whatsapp' } });
+
     const shareText = `${partner1Name} & ${partner2Name} are ${compatibility.overallPercentage}% compatible! Take the Love Struck Again quiz`;
     const shareUrl = window.location.origin;
 
-    if (navigator.share) {
+    if (hasNativeShare) {
       try {
         await navigator.share({
           title: 'Love Struck Again - Compatibility',

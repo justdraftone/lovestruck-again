@@ -1,6 +1,7 @@
 import { PersonaResult } from '../lib/resultsEngine';
 import { personaVisuals } from '../data/results';
 import { PersonaName, personas } from '../data/personas';
+import { useQuizStore } from '../store/quizStore';
 
 interface ResultCardProps {
   result: PersonaResult;
@@ -26,6 +27,7 @@ export default function ResultCard({
   samePersona = false,
   onPairingClick,
 }: ResultCardProps) {
+  const questionSet = useQuizStore((s) => s.questionSet);
   const isLarge = variant === 'large' || variant === 'shareable';
   const isShareable = variant === 'shareable' || showShareable;
   const visuals = personaVisuals[result.name];
@@ -70,7 +72,11 @@ export default function ResultCard({
       />
 
       <p className={`result-card__desc ${isLarge ? 'result-card__desc--large' : ''}`}>
-        {samePersona ? (personas[result.name]?.coupleDescription || result.description) : result.description}
+        {samePersona
+          ? (questionSet === 'nigeria'
+              ? (personas[result.name]?.nigeriaCoupleDescription || personas[result.name]?.coupleDescription || result.description)
+              : (personas[result.name]?.coupleDescription || result.description))
+          : result.description}
       </p>
 
       {!hidePairings && (

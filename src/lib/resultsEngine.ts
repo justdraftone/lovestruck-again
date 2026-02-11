@@ -18,7 +18,7 @@ export interface CompatibilityReport {
   romanceDescription: string;
 }
 
-export function calculateResult(answers: Record<number, 'left' | 'right'>): PersonaResult {
+export function calculateResult(answers: Record<number, 'left' | 'right'>, questionSet?: 'nigeria' | 'global'): PersonaResult {
   const scores: Partial<Record<PersonaName, number>> = {};
 
   // Only count right swipes (like original lovestruck)
@@ -47,10 +47,15 @@ export function calculateResult(answers: Record<number, 'left' | 'right'>): Pers
     }
   });
 
+  const persona = personas[topPersona];
+  const description = questionSet === 'nigeria'
+    ? (persona.nigeriaDescription || persona.description)
+    : persona.description;
+
   return {
     name: topPersona,
-    emoji: personas[topPersona].emoji,
-    description: personas[topPersona].description,
+    emoji: persona.emoji,
+    description,
     score: maxScore,
   };
 }
@@ -114,7 +119,6 @@ function calculateQuestionScore(
 ): number {
   const bothYes = answer1 === 'right' && answer2 === 'right';
   const bothNo = answer1 === 'left' && answer2 === 'left';
-  const mismatch = answer1 !== answer2;
 
   if (polarity === 'red-flag') {
     // Red flag questions: Both saying "no" is great, both "yes" is bad

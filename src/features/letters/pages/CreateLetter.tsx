@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLetterStore } from '../store/letterStore';
+import { trackEvent } from '../../../lib/analytics';
 
 export default function CreateLetter() {
   const navigate = useNavigate();
@@ -176,6 +177,7 @@ export default function CreateLetter() {
       rotation: imageRotation
     } : undefined;
     const letterId = createLetter(content.trim(), recipientName.trim(), senderName.trim(), imageData);
+    trackEvent('letter_create', { metadata: { hasImage: !!image, letterId } });
     navigate(`/letters/send/${letterId}`);
   };
 

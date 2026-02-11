@@ -9,6 +9,7 @@ import CouplesResults from '../components/CouplesResults';
 import ValentinesCardCta from '../components/ValentinesCardCta';
 import { supabase } from '../lib/supabase';
 import { PersonaName, personas } from '../data/personas';
+import { trackEvent } from '../lib/analytics';
 
 export default function Results() {
   const navigate = useNavigate();
@@ -60,22 +61,30 @@ export default function Results() {
     fetchRemoteData();
   }, [isCouplesRemote]);
 
+  // Track quiz completion
+  useEffect(() => {
+    if (!isLoading) {
+      const mode = isSolo ? 'solo' : isCouplesLocal ? 'couples-local' : 'couples-remote';
+      trackEvent('quiz_complete', { metadata: { mode } });
+    }
+  }, [isLoading, isSolo, isCouplesLocal]);
+
   // Get remote data from Supabase room instead of sessionStorage
   const remoteName1 = remoteRoomData?.partner1_name || 'Partner 1';
   const remoteName2 = remoteRoomData?.partner2_name || 'Partner 2';
   const remoteAnswers1 = remoteRoomData?.partner1_answers || {};
   const remoteAnswers2 = remoteRoomData?.partner2_answers || {};
 
-  const soloResult = isSolo ? calculateResult(answers) : null;
+  const soloResult = isSolo ? calculateResult(answers, questionSet) : null;
   const partner1Result = isCouplesLocal
-    ? calculateResult(partner1Answers)
+    ? calculateResult(partner1Answers, questionSet)
     : isCouplesRemote
-    ? calculateResult(remoteAnswers1)
+    ? calculateResult(remoteAnswers1, questionSet)
     : null;
   const partner2Result = isCouplesLocal
-    ? calculateResult(partner2Answers)
+    ? calculateResult(partner2Answers, questionSet)
     : isCouplesRemote
-    ? calculateResult(remoteAnswers2)
+    ? calculateResult(remoteAnswers2, questionSet)
     : null;
 
   const displayName1 = isCouplesRemote ? remoteName1 : partner1Name;
@@ -151,7 +160,9 @@ export default function Results() {
         {/* Pairing Detail Modal */}
         {selectedPairing && (() => {
           const pairingData = personas[selectedPairing];
-          const pairDescription = pairingData?.pairDescription || 'A perfect match for you!';
+          const pairDescription = (questionSet === 'nigeria' ? pairingData?.nigeriaPairDescription : undefined)
+            ?? pairingData?.pairDescription
+            ?? 'A perfect match for you!';
 
           return (
             <div className="share-modal" onClick={() => setSelectedPairing(null)}>

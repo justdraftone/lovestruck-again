@@ -4,6 +4,7 @@ import { PersonaResult } from '../lib/resultsEngine';
 import ResultCard from './ResultCard';
 import { getPersonaCardVars } from '../data/cardSettings';
 import { PersonaName } from '../data/personas';
+import { trackEvent } from '../lib/analytics';
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -18,6 +19,8 @@ export default function ShareModal({ isOpen, onClose, result }: ShareModalProps)
 
   const handleDownload = useCallback(async () => {
     if (!cardRef.current) return;
+
+    trackEvent('download_click', { metadata: { type: 'solo_result', persona: result.name } });
 
     try {
       // Wait for fonts to load
@@ -51,7 +54,7 @@ export default function ShareModal({ isOpen, onClose, result }: ShareModalProps)
       const dataUrl = await toPng(cardRef.current, {
         quality: 1,
         pixelRatio: 3,
-        backgroundColor: null,
+        backgroundColor: undefined,
         cacheBust: true,
       });
 
@@ -68,13 +71,16 @@ export default function ShareModal({ isOpen, onClose, result }: ShareModalProps)
       console.error('Failed to generate image:', error);
       alert('Failed to download image. Please try again.');
     }
-  }, [result.name]);
+  }, [result]);
 
   const handleShare = useCallback(async () => {
+    const hasNativeShare = 'share' in navigator;
+    trackEvent('share_click', { metadata: { type: 'solo_result', persona: result.name, method: hasNativeShare ? 'native' : 'whatsapp' } });
+
     const shareText = `I'm "${result.name}"! Take the Love Struck Again quiz to find your romantic personality`;
     const shareUrl = window.location.origin;
 
-    if (navigator.share) {
+    if (hasNativeShare) {
       try {
         await navigator.share({
           title: 'Love Struck Again',

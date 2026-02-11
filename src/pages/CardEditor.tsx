@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ResultCard from '../components/ResultCard';
 import CompatibilityCard from '../components/CompatibilityCard';
-import { personaVisuals } from '../data/results';
 import { PersonaName } from '../data/personas';
 
 type CardType = 'single' | 'couples';
@@ -361,12 +360,7 @@ export default function CardEditor() {
   const [couplesGrainBlendMode, setCouplesGrainBlendMode] = useState('overlay');
 
   const currentPersonaName = PERSONA_NAMES[currentPersonaIndex];
-  const currentOverrides = personaOverrides[currentPersonaName] || {};
 
-  // Get effective value (persona override or global default)
-  const getEffectiveValue = (key: keyof PersonaSettings, defaultValue: number) => {
-    return currentOverrides[key] ?? defaultValue;
-  };
 
   // Lock all current settings for this persona
   const lockAllSettings = () => {
@@ -463,7 +457,8 @@ export default function CardEditor() {
   const sampleResult = {
     name: currentPersonaName,
     description: "You don't do anything halfway, especially love. If you're in, you're IN. Your emotional range is either absolute euphoria or full existential crisis. There is no in-between. You need a partner who can handle the intensity or will simply perish trying. Chill? Never heard of her.",
-    scores: {} as any
+    emoji: '💘',
+    score: 0,
   };
 
   // Load persona-specific values when persona changes
@@ -536,9 +531,12 @@ export default function CardEditor() {
 
   const sampleCompatibility = {
     overallPercentage: 87,
+    compatibilityLevel: 'Soulmates',
+    description: 'You two are made for each other. Your connection is off the charts.',
+    chemistryPercentage: 90,
+    chemistryDescription: "You finish each other's sentences.",
     romancePercentage: 92,
-    compatibilityLevel: "Soul Mates" as const,
-    description: "You two are made for each other. Your connection is off the charts.",
+    romanceDescription: 'Your love languages are basically the same person.',
   };
 
   const exportSettings = () => {
@@ -748,7 +746,7 @@ export default function CardEditor() {
                 }}
               >
                 <ResultCard
-                  result={{ name: personaName, description: "Preview mode", scores: {} as any }}
+                  result={{ name: personaName, description: "Preview mode", emoji: '💘', score: 0 }}
                   variant="large"
                   showShareable
                   hidePairings

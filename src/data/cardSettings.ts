@@ -292,5 +292,5 @@ export const couplesCardVars = {
 export function getPersonaCardVars(name: PersonaName, isMobile: boolean): Record<string, string> {
   const settings = personaCardSettings[name];
   if (!settings) return {};
-  return isMobile ? settings.mobile : settings.desktop;
+  return (isMobile ? settings.mobile : settings.desktop) as unknown as Record<string, string>;
 }

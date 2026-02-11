@@ -67,7 +67,7 @@ export default function Home() {
           </button>
         </div>
 
-        <p className='home-credits'>Made with ❤️ by DraftOne</p>
+        <p className='home-credits'>Made with ❤️ by <a href="https://justdraftone.xyz/" target="_blank" rel="noopener noreferrer">DraftOne</a></p>
       </div>
 
     </div>

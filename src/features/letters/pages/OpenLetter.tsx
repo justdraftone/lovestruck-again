@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLetterStore } from '../store/letterStore';
+import { trackEvent } from '../../../lib/analytics';
 
 export default function OpenLetter() {
   const navigate = useNavigate();
@@ -31,6 +32,7 @@ export default function OpenLetter() {
       return;
     }
 
+    trackEvent('letter_open', { metadata: { letterId } });
     navigate(`/letters/view/${letterId}`);
   };
 

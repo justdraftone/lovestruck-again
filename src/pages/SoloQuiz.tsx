@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuizStore } from '../store/quizStore';
 import { nigeriaQuestions, globalQuestions, Question } from '../data/questions';
 import { useSwipe } from '../hooks/useSwipe';
+import { trackEvent } from '../lib/analytics';
 
 // Helper function to select random questions
 function selectRandomQuestions(questions: Question[], count: number): Question[] {
@@ -44,6 +45,7 @@ export default function SoloQuiz() {
 
   useEffect(() => {
     setMode('solo');
+    trackEvent('quiz_start', { metadata: { mode: 'solo' } });
   }, [setMode]);
 
   const dismissExplainer = () => {

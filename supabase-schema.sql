@@ -64,3 +64,30 @@ $$ LANGUAGE plpgsql;
 -- Optional: You can set up a cron job in Supabase to run this daily
 -- Go to Database > Cron Jobs in your Supabase dashboard and add:
 -- SELECT delete_old_rooms();
+
+-- Create visits table for admin dashboard analytics
+CREATE TABLE IF NOT EXISTS visits (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  path TEXT NOT NULL,
+  event_type TEXT DEFAULT 'page_visit',
+  metadata JSONB DEFAULT '{}'::jsonb,
+  referrer TEXT,
+  user_agent TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create index for faster queries by date
+CREATE INDEX IF NOT EXISTS visits_created_at_idx ON visits(created_at DESC);
+
+-- Enable Row Level Security (RLS)
+ALTER TABLE visits ENABLE ROW LEVEL SECURITY;
+
+-- Policy: Anyone can insert visits (for tracking)
+CREATE POLICY "Anyone can insert visits"
+  ON visits FOR INSERT
+  WITH CHECK (true);
+
+-- Policy: Only allow reading visits (for admin dashboard - no user auth, relies on password)
+CREATE POLICY "Anyone can read visits"
+  ON visits FOR SELECT
+  USING (true);

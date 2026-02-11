@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { nigeriaQuestions, globalQuestions, Question } from '../data/questions';
 import { useSwipe } from '../hooks/useSwipe';
 import { useQuizStore } from '../store/quizStore';
+import { trackEvent } from '../lib/analytics';
 import {
   createRoom,
   joinRoom,
@@ -102,6 +103,7 @@ export default function CouplesQuizRemote() {
 
   useEffect(() => {
     setMode('couples-remote');
+    trackEvent('quiz_start', { metadata: { mode: 'couples-remote' } });
   }, [setMode]);
 
   // Initialize room (create or join)
