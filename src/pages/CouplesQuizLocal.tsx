@@ -4,6 +4,7 @@ import { useQuizStore } from '../store/quizStore';
 import { nigeriaQuestions, globalQuestions, Question } from '../data/questions';
 import { useSwipe } from '../hooks/useSwipe';
 import { trackEvent } from '../lib/analytics';
+import Loader from '../components/Loader';
 
 // Helper function to select random questions
 function selectRandomQuestions(questions: Question[], count: number): Question[] {
@@ -36,6 +37,7 @@ export default function CouplesQuizLocal() {
   const [isSwiping, setIsSwiping] = useState<'left' | 'right' | null>(null);
   const [showExplainer, setShowExplainer] = useState(false);
   const [isExplainerExiting, setIsExplainerExiting] = useState(false);
+  const [isCalculating, setIsCalculating] = useState(false);
 
   // Select questions based on question set
   const questions = useMemo(() => {
@@ -78,7 +80,11 @@ export default function CouplesQuizLocal() {
       setIsSwiping(null);
 
       if (currentQuestion + 1 >= questions.length) {
-        navigate('/results/couples-local');
+        // Show loader for 3 seconds before showing results
+        setIsCalculating(true);
+        setTimeout(() => {
+          navigate('/results/couples-local');
+        }, 3000);
       } else {
         nextQuestion();
         switchPartner();
@@ -262,7 +268,15 @@ export default function CouplesQuizLocal() {
 
     {/* </div> */}
       <div className='highlight-glow'></div>
-      
+
+      {isCalculating && (
+        <div className="calculating-overlay">
+          <div className="calculating-overlay__content">
+            <Loader />
+            <p className="calculating-overlay__text">Calculating your results...</p>
+          </div>
+        </div>
+      )}
 
       {showExplainer && (
         <div className={`explainer ${isExplainerExiting ? 'explainer--exiting' : ''}`}>

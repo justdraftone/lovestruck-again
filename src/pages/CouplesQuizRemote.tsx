@@ -4,6 +4,7 @@ import { nigeriaQuestions, globalQuestions, Question } from '../data/questions';
 import { useSwipe } from '../hooks/useSwipe';
 import { useQuizStore } from '../store/quizStore';
 import { trackEvent } from '../lib/analytics';
+import Loader from '../components/Loader';
 import {
   createRoom,
   joinRoom,
@@ -49,6 +50,7 @@ export default function CouplesQuizRemote() {
   const phaseRef = useRef<GamePhase>(phase);
   const partnerNumRef = useRef<1 | 2>(partnerNum);
   const [displayQuestion, setDisplayQuestion] = useState(0);
+  const [isCalculating, setIsCalculating] = useState(false);
 
   // Keep refs in sync with state
   useEffect(() => {
@@ -182,10 +184,11 @@ export default function CouplesQuizRemote() {
 
       // Navigate to results when game is finished
       if (updatedRoom.status === 'finished') {
-        // Small delay to show the last question
+        // Show loader for 3 seconds before showing results
+        setIsCalculating(true);
         setTimeout(() => {
           navigate('/results/couples-remote');
-        }, 1000);
+        }, 3000);
       }
     });
 
@@ -551,6 +554,15 @@ export default function CouplesQuizRemote() {
       </div>
 
       <div className='highlight-glow'></div>
+
+      {isCalculating && (
+        <div className="calculating-overlay">
+          <div className="calculating-overlay__content">
+            <Loader />
+            <p className="calculating-overlay__text">Calculating your results...</p>
+          </div>
+        </div>
+      )}
 
       {showExplainer && (
         <div className={`explainer ${isExplainerExiting ? 'explainer--exiting' : ''}`}>
