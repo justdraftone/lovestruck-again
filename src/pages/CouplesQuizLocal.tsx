@@ -267,7 +267,7 @@ export default function CouplesQuizLocal() {
           <div className="explainer__backdrop" onClick={dismissExplainer} />
           <div className="explainer__content" style={{ flexDirection: 'column' }}>
 
-            <div style={{ width: '100%', marginTop: '-112px', marginBottom: '100px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+            <div className="explainer__turn-block" style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
               <div style={{
                 fontSize: '1rem',
                 fontWeight: 'bold',
@@ -283,7 +283,7 @@ export default function CouplesQuizLocal() {
               </p>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'row', gap: '90px', width: '100%', justifyContent: 'center', alignItems: 'center' }}>
+            <div className="explainer__controls-row" style={{ display: 'flex', flexDirection: 'row', width: '100%', justifyContent: 'center', alignItems: 'center' }}>
               <div className='explainer__swipe'>
                 <button className="answer-btn answer-btn--icon">
                   <svg className="icon icon--red" fill="none" stroke="currentColor" viewBox="0 0 24 24">

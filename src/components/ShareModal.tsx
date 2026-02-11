@@ -1,7 +1,9 @@
-import { useRef, useCallback, useState } from 'react';
+import { useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PersonaResult } from '../lib/resultsEngine';
 import ResultCard from './ResultCard';
+import { getPersonaCardVars } from '../data/cardSettings';
+import { PersonaName } from '../data/personas';
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -13,76 +15,54 @@ export default function ShareModal({ isOpen, onClose, result }: ShareModalProps)
   const cardRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  // Debug controls (unused but kept for future debugging)
-  // const [debugMode] = useState(true);
-  const [descFontSize] = useState(0.8875);
-  const [descLineHeight] = useState(1.5);
-  const [descMarginTop] = useState(-55);
-  const [descMarginBottom] = useState(16);
-  const [logoBottom] = useState(34);
-  const [logoOpacity] = useState(0.4);
-  const [logoMaxWidth] = useState(115);
-  const [logoGrayscale] = useState(0);
-  const [cardPaddingTop] = useState(28);
-  const [cardPaddingBottom] = useState(92);
-  const [cardPaddingSide] = useState(60);
-  const [imageSize] = useState(300);
-  const [titleSize] = useState(3.4);
-
-  // @ts-ignore - debug function used in commented code
-  const copyCSS = () => {
-    const css = `
-// Share Card Styling
-.result-card--shareable {
-  padding: ${cardPaddingTop}px ${cardPaddingSide}px ${cardPaddingBottom}px;
-
-  .result-card__desc--large {
-    font-size: ${descFontSize}rem;
-    line-height: ${descLineHeight};
-    margin-top: ${descMarginTop}px;
-    margin-bottom: ${descMarginBottom}px;
-  }
-
-  .result-card__image--large {
-    width: ${imageSize}px;
-    height: ${imageSize}px;
-  }
-
-  .result-card__name--large {
-    font-size: ${titleSize}rem;
-  }
-}
-
-.share-modal__logo {
-  bottom: ${logoBottom}px;
-
-  img {
-    max-width: ${logoMaxWidth}px;
-    opacity: ${logoOpacity};
-    filter: grayscale(${logoGrayscale}%);
-  }
-}`;
-    navigator.clipboard.writeText(css);
-    alert('CSS copied to clipboard!');
-  };
 
   const handleDownload = useCallback(async () => {
     if (!cardRef.current) return;
 
     try {
-      // Dynamic import for html2canvas
-      const html2canvas = (await import('html2canvas')).default;
+      // Wait for fonts to load
+      await document.fonts.ready;
 
-      const canvas = await html2canvas(cardRef.current, {
+      // Wait for all images to load
+      const images = cardRef.current.querySelectorAll('img');
+      await Promise.all(
+        Array.from(images).map((img) => {
+          if (img.complete) return Promise.resolve();
+          return new Promise((resolve) => {
+            img.onload = () => resolve(null);
+            img.onerror = () => resolve(null);
+          });
+        })
+      );
+
+      // Small delay to ensure everything is rendered
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      // Temporarily add padding to the card (not wrapper) to capture overflow content
+      const resultCard = cardRef.current.querySelector('.result-card') as HTMLElement;
+      const originalPadding = resultCard ? resultCard.style.paddingBottom : '';
+      if (resultCard) {
+        resultCard.style.paddingBottom = '120px';
+      }
+
+      // Dynamic import for html-to-image
+      const { toPng } = await import('html-to-image');
+
+      const dataUrl = await toPng(cardRef.current, {
+        quality: 1,
+        pixelRatio: 3,
         backgroundColor: null,
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
+        cacheBust: true,
       });
+
+      // Restore original padding
+      if (resultCard) {
+        resultCard.style.paddingBottom = originalPadding;
+      }
 
       const link = document.createElement('a');
       link.download = `lovestruck-${result.name.replace(/\s+/g, '-').toLowerCase()}.png`;
-      link.href = canvas.toDataURL('image/png');
+      link.href = dataUrl;
       link.click();
     } catch (error) {
       console.error('Failed to generate image:', error);
@@ -115,6 +95,9 @@ export default function ShareModal({ isOpen, onClose, result }: ShareModalProps)
 
   if (!isOpen) return null;
 
+  const isMobile = window.innerWidth < 768;
+  const cardVars = getPersonaCardVars(result.name as PersonaName, isMobile);
+
   return (
     <div className="share-modal" onClick={onClose}>
       <div className="share-modal__overlay" />
@@ -123,21 +106,7 @@ export default function ShareModal({ isOpen, onClose, result }: ShareModalProps)
         <div
           ref={cardRef}
           className="share-modal__card-wrapper"
-          style={{
-            ['--desc-font-size' as any]: `${descFontSize}rem`,
-            ['--desc-line-height' as any]: descLineHeight,
-            ['--desc-margin-top' as any]: `${descMarginTop}px`,
-            ['--desc-margin-bottom' as any]: `${descMarginBottom}px`,
-            ['--logo-bottom' as any]: `${logoBottom}px`,
-            ['--logo-opacity' as any]: logoOpacity,
-            ['--logo-max-width' as any]: `${logoMaxWidth}px`,
-            ['--logo-grayscale' as any]: `${logoGrayscale}%`,
-            ['--card-padding-top' as any]: `${cardPaddingTop}px`,
-            ['--card-padding-bottom' as any]: `${cardPaddingBottom}px`,
-            ['--card-padding-side' as any]: `${cardPaddingSide}px`,
-            ['--image-size' as any]: `${imageSize}px`,
-            ['--title-size' as any]: `${titleSize}rem`,
-          }}
+          style={cardVars as React.CSSProperties}
         >
           <ResultCard result={result} variant="large" showShareable hidePairings />
           <div className="share-modal__logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>

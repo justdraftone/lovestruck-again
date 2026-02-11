@@ -66,9 +66,27 @@ export default function CompatibilityCard({
         </div>
       )}
 
-      <p className={showNames? "compatibility-card__description compatibility-card__description-result" : "compatibility-card__description"}>{compatibility.description}</p>
+      <p
+        className={showNames? "compatibility-card__description compatibility-card__description-result" : "compatibility-card__description"}
+        style={{
+          marginTop: 'var(--body-margin-top, -45px)',
+          marginBottom: 'var(--body-margin-bottom, 36px)',
+          fontSize: 'var(--body-font-size, 0.95rem)'
+        }}
+      >
+        {compatibility.description}
+      </p>
 
-      <img className="compatibility-card__cloud" src="/assets/illos/results-card-cloud.svg" alt="" />
+      <img
+        className="compatibility-card__cloud"
+        src="/assets/illos/results-card-cloud.svg"
+        alt=""
+        style={{
+          bottom: 'var(--cloud-bottom, -45%)',
+          left: 'var(--cloud-left, -10%)',
+          width: 'var(--cloud-width, 270%)'
+        }}
+      />
 
       {shareable && (
         <div className="share-modal__logo" style={{ bottom: '34px' }}>

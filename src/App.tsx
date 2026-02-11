@@ -5,6 +5,7 @@ import CouplesModeSelect from './pages/CouplesModeSelect'
 import CouplesQuizLocal from './pages/CouplesQuizLocal'
 import CouplesQuizRemote from './pages/CouplesQuizRemote'
 import Results from './pages/Results'
+import CardEditor from './pages/CardEditor'
 import NoiseOverlay from './components/NoiseOverlay'
 import {
   LetterHome,
@@ -25,6 +26,7 @@ function App() {
         <Route path="/couples/together" element={<CouplesQuizLocal />} />
         <Route path="/couples/remote" element={<CouplesQuizRemote />} />
         <Route path="/results/:mode" element={<Results />} />
+        <Route path="/card-editor" element={<CardEditor />} />
 
         {/* Valentine's Letter Writer */}
         <Route path="/letters" element={<LetterHome />} />

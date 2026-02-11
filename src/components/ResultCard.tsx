@@ -31,6 +31,7 @@ export default function ResultCard({
   const visuals = personaVisuals[result.name];
   const gradient = visuals?.gradient || personaVisuals["The Vibe Checker"].gradient;
   const image = visuals?.image || personaVisuals["The Vibe Checker"].image;
+  const nameColor = visuals?.nameColor;
   const compatibleType = pairsWellWith || visuals?.pairsWellWith || "The Vibe Checker";
 
   // Get the gradient for the compatible persona type
@@ -54,7 +55,10 @@ export default function ResultCard({
         </p>
       )}
 
-      <h3 className={`result-card__name ${isLarge ? 'result-card__name--large' : ''}`}>
+      <h3
+        className={`result-card__name ${isLarge ? 'result-card__name--large' : ''}`}
+        style={nameColor ? { color: nameColor } : undefined}
+      >
         {result.name}
       </h3>
 

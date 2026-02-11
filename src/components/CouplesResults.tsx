@@ -3,6 +3,8 @@ import { PersonaResult, CompatibilityReport } from '../lib/resultsEngine';
 import ResultCard from './ResultCard';
 import CompatibilityCard from './CompatibilityCard';
 import ValentinesCardCta from './ValentinesCardCta';
+import { getPersonaCardVars, couplesCardVars } from '../data/cardSettings';
+import { PersonaName } from '../data/personas';
 
 interface CouplesResultsProps {
   partner1Name: string;
@@ -76,18 +78,49 @@ export default function CouplesResults({
     if (!cardRef.current) return;
 
     try {
-      const html2canvas = (await import('html2canvas')).default;
+      // Wait for fonts to load
+      await document.fonts.ready;
 
-      const canvas = await html2canvas(cardRef.current, {
+      // Wait for all images to load
+      const images = cardRef.current.querySelectorAll('img');
+      await Promise.all(
+        Array.from(images).map((img) => {
+          if (img.complete) return Promise.resolve();
+          return new Promise((resolve) => {
+            img.onload = () => resolve(null);
+            img.onerror = () => resolve(null);
+          });
+        })
+      );
+
+      // Small delay to ensure everything is rendered
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      // Temporarily add padding to the card (not wrapper) to capture overflow content
+      const resultCard = cardRef.current.querySelector('.result-card, .compatibility-card') as HTMLElement;
+      const originalPadding = resultCard ? resultCard.style.paddingBottom : '';
+      if (resultCard) {
+        resultCard.style.paddingBottom = '120px';
+      }
+
+      // Dynamic import for html-to-image
+      const { toPng } = await import('html-to-image');
+
+      const dataUrl = await toPng(cardRef.current, {
+        quality: 1,
+        pixelRatio: 3,
         backgroundColor: null,
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
+        cacheBust: true,
       });
+
+      // Restore original padding
+      if (resultCard) {
+        resultCard.style.paddingBottom = originalPadding;
+      }
 
       const link = document.createElement('a');
       link.download = `compatibility-${partner1Name}-${partner2Name}.png`;
-      link.href = canvas.toDataURL('image/png');
+      link.href = dataUrl;
       link.click();
     } catch (error) {
       console.error('Failed to generate image:', error);
@@ -233,6 +266,12 @@ export default function CouplesResults({
             <div
               ref={cardRef}
               className="share-modal__card-wrapper"
+              style={(() => {
+                const isMobile = window.innerWidth < 768;
+                if (shareCardIndex === 0) return couplesCardVars[isMobile ? 'mobile' : 'desktop'] as React.CSSProperties;
+                const personaName = (shareCardIndex === 1 ? partner1Result.name : partner2Result.name) as PersonaName;
+                return getPersonaCardVars(personaName, isMobile) as React.CSSProperties;
+              })()}
               onTouchStart={(e) => {
                 const touch = e.touches[0];
                 const startX = touch.clientX;

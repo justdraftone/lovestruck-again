@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useQuizStore } from '../store/quizStore';
 import BlurImage from '../components/BlurImage';
+import ValentinesCardCta from '../components/ValentinesCardCta';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -36,6 +37,7 @@ export default function Home() {
       <BlurImage src="/assets/illos/heart-red.svg" alt="" className="heart heart--3 heart--animate heart--animate-delay-2" />
       <BlurImage src="/assets/illos/heart-red.svg" alt="" className="heart heart--4 flip-h heart--animate heart--animate-delay-1" />
       <BlurImage src="/assets/illos/heart-gold.svg" alt="" className="heart heart--5 flip-h heart--animate heart--animate-delay-2" />
+      <ValentinesCardCta variant="floating" animated />
       <BlurImage src="/assets/illos/heart-gold.svg" alt="" className="heart heart--7 heart--animate heart--animate-delay-1" />
 
 
