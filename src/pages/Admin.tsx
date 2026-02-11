@@ -68,18 +68,18 @@ function catmullRomPath(pts: { x: number; y: number }[], tension = 0.3): string 
 function AreaChart({ points, color }: { points: number[]; color: string }) {
   if (points.length < 2) return <div style={{ ...S.muted, padding: '1.5rem 0', textAlign: 'center' }}>Not enough data</div>
   const max = Math.max(...points, 1)
-  const W = 100, H = 100, PAD = 3
+  const W = 100, H = 100, PAD = 12
   const step = (W - PAD * 2) / (points.length - 1)
   const pts = points.map((v, i) => ({ x: PAD + i * step, y: H - (v / max) * H * 0.88 - H * 0.06 }))
-  const linePath = catmullRomPath(pts)
+  const linePath = catmullRomPath(pts, 0.2)
   const last = pts[pts.length - 1]
   const first = pts[0]
   const areaPath = `${linePath} L ${last.x} ${H} L ${first.x} ${H} Z`
   const gradId = `g${color.replace(/[^a-z0-9]/gi, '')}`
 
   return (
-    <div style={{ overflow: 'hidden', margin: '0 -1px' }}>
-      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ width: 'calc(100% + 2px)', height: '200px', display: 'block' }}>
+    <div style={{ overflow: 'visible', padding: '0 4px' }}>
+      <svg viewBox={`-8 -5 ${W + 16} ${H + 10}`} preserveAspectRatio="none" style={{ width: '100%', height: '200px', display: 'block' }}>
         <defs>
           <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%"   stopColor={color} stopOpacity="0.30" />
