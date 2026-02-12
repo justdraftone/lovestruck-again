@@ -123,17 +123,17 @@ function calculateQuestionScore(
   if (polarity === 'red-flag') {
     // Red flag questions: Both saying "no" is great, both "yes" is bad
     if (bothNo) return 1.5; // Extra points for both rejecting red flags
-    if (bothYes) return 0.3; // Low score for both accepting red flags
-    return 0; // Mismatch on red flags is a big issue
+    if (bothYes) return 0.7; // Both accepting red flags - not ideal but not terrible
+    return 0.6; // Mismatch on red flags - one person sets boundaries
   } else if (polarity === 'green-flag') {
     // Green flag questions: Both saying "yes" is great, both "no" is concerning
     if (bothYes) return 1.5; // Extra points for both embracing green flags
-    if (bothNo) return 0.5; // Lower score for both rejecting healthy behaviors
-    return 0.7; // Mismatch is okay, one person can lead by example
+    if (bothNo) return 0.8; // Both rejecting healthy behaviors - room to grow together
+    return 0.9; // Mismatch is okay, one person can lead by example
   } else {
     // Neutral questions: Just matching preferences
     if (bothYes || bothNo) return 1.0; // Standard match
-    return 0.5; // Slight credit for different preferences (can complement)
+    return 0.7; // Different preferences can complement each other
   }
 }
 
@@ -189,31 +189,31 @@ export function calculateCompatibility(
     }
   });
 
-  // Calculate base compatibility (65-98% range with better scaling)
+  // Calculate base compatibility (75-99% range with better scaling)
   const baseCompatibility = maxPossibleScore > 0
     ? Math.round((totalScore / maxPossibleScore) * 100)
     : 75;
 
-  const overallPercentage = Math.min(98, Math.max(65, baseCompatibility));
+  const overallPercentage = Math.min(99, Math.max(75, baseCompatibility));
 
   // Calculate chemistry percentage using weighted scores
   let chemistryPercentage: number;
   if (chemistryMaxScore > 0) {
     const baseChemistry = Math.round((chemistryScore / chemistryMaxScore) * 100);
-    chemistryPercentage = Math.min(99, Math.max(70, baseChemistry));
+    chemistryPercentage = Math.min(99, Math.max(75, baseChemistry));
   } else {
-    // Fallback to overall with slight variance
-    chemistryPercentage = Math.min(99, Math.max(70, overallPercentage + Math.floor(Math.random() * 10) - 5));
+    // Fallback to overall percentage (deterministic, no randomness)
+    chemistryPercentage = overallPercentage;
   }
 
   // Calculate romance percentage using weighted scores
   let romancePercentage: number;
   if (romanceMaxScore > 0) {
     const baseRomance = Math.round((romanceScore / romanceMaxScore) * 100);
-    romancePercentage = Math.min(99, Math.max(70, baseRomance));
+    romancePercentage = Math.min(99, Math.max(75, baseRomance));
   } else {
-    // Fallback to overall with slight variance
-    romancePercentage = Math.min(99, Math.max(70, overallPercentage + Math.floor(Math.random() * 10) - 5));
+    // Fallback to overall percentage (deterministic, no randomness)
+    romancePercentage = overallPercentage;
   }
 
   // Determine compatibility level

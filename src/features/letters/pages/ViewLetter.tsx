@@ -11,17 +11,20 @@ export default function ViewLetter() {
   const [letter, setLetter] = useState<ReturnType<typeof getLetter>>(null);
 
   useEffect(() => {
-    if (!letterId) {
-      navigate('/letters');
-      return;
-    }
-    const foundLetter = getLetter(letterId);
-    if (!foundLetter) {
-      navigate('/letters/open');
-      return;
-    }
-    setLetter(foundLetter);
-    setCurrentLetter(foundLetter);
+    const fetchLetter = async () => {
+      if (!letterId) {
+        navigate('/letters');
+        return;
+      }
+      const foundLetter = await getLetter(letterId);
+      if (!foundLetter) {
+        navigate('/letters/open');
+        return;
+      }
+      setLetter(foundLetter);
+      setCurrentLetter(foundLetter);
+    };
+    fetchLetter();
   }, [letterId, getLetter, navigate, setCurrentLetter]);
 
   const handleAnimationComplete = () => {

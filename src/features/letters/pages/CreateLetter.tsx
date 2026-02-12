@@ -179,13 +179,13 @@ export default function CreateLetter() {
     setStickerAction(null);
   };
 
-  const handleDone = () => {
+  const handleDone = async () => {
     if (!content.trim()) return;
     const imageData = image ? { src: image, position: imagePosition, size: imageSize, rotation: imageRotation } : undefined;
     const stickerDatas = stickers.length > 0
       ? stickers.map(s => ({ src: s.src, position: s.position, size: s.size, rotation: s.rotation }))
       : undefined;
-    const letterId = createLetter(content.trim(), recipientName.trim(), senderName.trim(), imageData, stickerDatas);
+    const letterId = await createLetter(content.trim(), recipientName.trim(), senderName.trim(), imageData, stickerDatas);
     trackEvent('letter_create', { metadata: { hasImage: !!image, stickerCount: stickers.length, letterId } });
     navigate(`/letters/send/${letterId}`);
   };

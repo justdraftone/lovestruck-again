@@ -14,6 +14,7 @@ interface CouplesResultsProps {
   partner2Result: PersonaResult;
   compatibility: CompatibilityReport;
   onPlayAgain: () => void;
+  currentPartnerNum?: 1 | 2;
 }
 
 export default function CouplesResults({
@@ -23,8 +24,10 @@ export default function CouplesResults({
   partner2Result,
   compatibility,
   onPlayAgain,
+  currentPartnerNum,
 }: CouplesResultsProps) {
-  const [activePartner, setActivePartner] = useState<1 | 2>(1);
+  // Start with the current user's card if in remote mode, otherwise partner 1
+  const [activePartner, setActivePartner] = useState<1 | 2>(currentPartnerNum || 1);
   const [isFlipping, setIsFlipping] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareCardIndex, setShareCardIndex] = useState(0); // 0: compatibility, 1: partner1, 2: partner2

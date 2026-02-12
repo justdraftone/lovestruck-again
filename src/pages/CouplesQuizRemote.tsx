@@ -61,7 +61,8 @@ export default function CouplesQuizRemote() {
     partnerNumRef.current = partnerNum;
   }, [partnerNum]);
 
-  const [playerName] = useState('Player');
+  const [playerName, setPlayerName] = useState('');
+  const [nameSet, setNameSet] = useState(false);
   const [partnerName, setPartnerName] = useState('');
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
   const [isSwiping, setIsSwiping] = useState<'left' | 'right' | null>(null);
@@ -108,8 +109,10 @@ export default function CouplesQuizRemote() {
     trackEvent('quiz_start', { metadata: { mode: 'couples-remote' } });
   }, [setMode]);
 
-  // Initialize room (create or join)
+  // Initialize room (create or join) - only after name is set
   useEffect(() => {
+    if (!nameSet || !playerName) return;
+
     const initRoom = async () => {
       if (isHost) {
         // Host creates a new room
@@ -119,11 +122,12 @@ export default function CouplesQuizRemote() {
           setPlayerId(result.playerId);
           setPartnerNum(1);
           setDisplayQuestion(result.room.current_question);
-          // Store room ID for potential reconnection
+          // Store room ID and partner number for results page
           localStorage.setItem('currentRoomId', result.room.id);
           localStorage.setItem('currentPlayerId', result.playerId);
+          localStorage.setItem('currentPartnerNum', '1');
         } else {
-          setError('Failed to create room. Please check your Supabase configuration.');
+          setError('We couldn\'t create a room for you. Please try again.');
         }
       } else if (joinCode) {
         // Joiner joins existing room
@@ -140,17 +144,18 @@ export default function CouplesQuizRemote() {
           } else {
             setPhase('waiting-partner');
           }
-          // Store room ID for potential reconnection
+          // Store room ID and partner number for results page
           localStorage.setItem('currentRoomId', result.room.id);
           localStorage.setItem('currentPlayerId', result.playerId);
+          localStorage.setItem('currentPartnerNum', result.partnerNum.toString());
         } else {
-          setError('Failed to join room. Please check the room code.');
+          setError('We couldn\'t find that room. Please check the code and try again.');
         }
       }
     };
 
     initRoom();
-  }, [isHost, joinCode, playerName]);
+  }, [isHost, joinCode, playerName, nameSet]);
 
   // Subscribe to room updates
   useEffect(() => {
@@ -300,6 +305,45 @@ export default function CouplesQuizRemote() {
   useSwipe({ onSwipeLeft: handleSwipeLeft, onSwipeRight: handleSwipeRight });
 
   const lobbyLink = roomCode ? `${window.location.origin}/couples/remote?join=${roomCode}` : '';
+
+  // Show name input form before creating/joining room
+  if (!nameSet) {
+    return (
+      <div className="page page--centered gradient-love">
+        <div className="header header__couples-quiz header__couples-solo-lobby">
+          <button onClick={() => navigate('/couples')} className="back-btn">
+            Back
+          </button>
+          <img src="/assets/illos/d1-x-loveorlies.svg" alt="" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} />
+        </div>
+
+        <div className="card mode-card mode-card__couples-names mode-card__couples-names-form">
+          <h2 className="title title--md">{isHost ? "Create Remote Quiz" : "Join Remote Quiz"}</h2>
+
+          <div className="form-group">
+            <label className="label">Your Name</label>
+            <input
+              type="text"
+              value={playerName}
+              onChange={(e) => setPlayerName(e.target.value)}
+              className="input form-group--input"
+              placeholder="Enter your name"
+              autoFocus
+            />
+          </div>
+
+          <button
+            onClick={() => playerName.trim() && setNameSet(true)}
+            className="btn btn--primary btn-homepage btn--couples-names"
+            disabled={!playerName.trim()}
+          >
+            {isHost ? "Create Room" : "Join Room"}
+          </button>
+        </div>
+        <div className='highlight-glow highlight-glow--results'></div>
+      </div>
+    );
+  }
 
   // Show error if room creation/joining failed
   if (error) {
@@ -597,7 +641,7 @@ export default function CouplesQuizRemote() {
         </div>
       )}
 
-      {!isMyTurn && (
+      {!isMyTurn && !isCalculating && (
         <div className="waiting-screen">
           <div className="waiting-screen__backdrop" />
           <div className="waiting-screen__content">

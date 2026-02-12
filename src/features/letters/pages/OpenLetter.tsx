@@ -19,14 +19,14 @@ export default function OpenLetter() {
     return input.toUpperCase().replace(/[^A-Z0-9]/g, '');
   };
 
-  const handleOpenNow = () => {
+  const handleOpenNow = async () => {
     const letterId = extractLetterId(letterIdOrLink);
     if (letterId.length !== 6) {
       setError('Please enter a valid 6-character letter ID');
       return;
     }
 
-    const letter = getLetter(letterId);
+    const letter = await getLetter(letterId);
     if (!letter) {
       setError('Letter not found. Please check the ID and try again.');
       return;

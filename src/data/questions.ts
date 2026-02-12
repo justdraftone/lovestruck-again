@@ -40,7 +40,7 @@ export const nigeriaQuestions: Question[] = [
   { id: 31, text: "Their gift wrapping is a black nylon bag", emoji: "🛍" },
   { id: 32, text: "Asks \"Can I?\" before holding your hand every single time", emoji: "🤝" },
   { id: 33, text: "Checks your phone when you're in the bathroom", emoji: "📱" },
-  { id: 34, text: "hosts you for a week then returns with \"Babe, I was busy\"", emoji: "👻" },
+  { id: 34, text: "Ghosts you for a week then returns with \"Babe, I was busy\"", emoji: "👻" },
   { id: 35, text: "Expects you to \"understand\" when they cancel plans last minute", emoji: "⏰" },
   { id: 36, text: "Won't let you walk on the side closest to the road", emoji: "🚗" },
   { id: 37, text: "Thinks jealousy means love", emoji: "🔥" },

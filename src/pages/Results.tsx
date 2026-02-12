@@ -68,6 +68,7 @@ export default function Results() {
   }, [isLoading, isSolo, isCouplesLocal]);
 
   // Get remote data from Supabase room instead of sessionStorage
+  const currentPartnerNum = parseInt(localStorage.getItem('currentPartnerNum') || '1');
   const remoteName1 = remoteRoomData?.partner1_name || 'Partner 1';
   const remoteName2 = remoteRoomData?.partner2_name || 'Partner 2';
   const remoteAnswers1 = remoteRoomData?.partner1_answers || {};
@@ -203,6 +204,7 @@ export default function Results() {
         partner2Result={partner2Result}
         compatibility={compatibility}
         onPlayAgain={handlePlayAgain}
+        currentPartnerNum={isCouplesRemote ? currentPartnerNum : undefined}
       />
     );
   }
