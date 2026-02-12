@@ -27,15 +27,15 @@ $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 //fonts
 @font-face {
   font-family: "Rosindale Italic Bold";
-  src:url("../public/assets/Roslindale-DeckNarrowMediumItalic-Testing.otf");
+  src:url("/assets/Roslindale-DeckNarrowMediumItalic-Testing.otf");
 }
 @font-face {
   font-family: "Rosindale Italic";
-  src:url("../public/assets/Roslindale-TextItalic-Testing.otf");
+  src:url("/assets/Roslindale-TextItalic-Testing.otf");
 }
 @font-face {
   font-family: "Roslindale";
-  src:url("../public/assets/Roslindale-DeckNarrowMediumItalic-Testing.otf");
+  src:url("/assets/Roslindale-DeckNarrowMediumItalic-Testing.otf");
   font-style: normal;
 }
 
@@ -6645,7 +6645,7 @@ html {
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: url('/assets/texture.png');
+  background-image: url('/assets/grain.png');
   background-size: cover;
   background-position: center;
   mix-blend-mode: overlay;
