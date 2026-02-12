@@ -42,7 +42,7 @@ export default function Home() {
 
 
       <div className="content">
-        <img src="/assets/illos/d1-x-loveorlies.svg" alt="" className="content__collab-logo" />
+        <img src="/assets/illos/d1-x-loveorlies.svg" alt="" className="content__collab-logo" width="246" height="85" />
 
         {/* Logo clouds that move apart when logo appears */}
         <BlurImage src="/assets/illos/cloud-small.webp" alt="" className="logo-cloud logo-cloud--left" />

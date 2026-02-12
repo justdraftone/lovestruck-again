@@ -1,6 +1,5 @@
 import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { useLDClient } from 'launchdarkly-react-client-sdk'
 import Home from './pages/Home'
 import SoloQuiz from './pages/SoloQuiz'
 import CouplesModeSelect from './pages/CouplesModeSelect'
@@ -24,18 +23,12 @@ import Privacy from './pages/Privacy'
 
 function AppContent() {
   const setQuestionSet = useQuizStore((s) => s.setQuestionSet)
-  const ldClient = useLDClient()
 
   useVisitTracking()
 
   useEffect(() => {
     detectQuestionSet().then(setQuestionSet)
   }, [])
-
-  useEffect(() => {
-    if (!ldClient) return
-    ldClient.track('source', { source: 'cursor' })
-  }, [ldClient])
 
   return (
     <>
