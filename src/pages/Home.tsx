@@ -42,13 +42,13 @@ export default function Home() {
 
 
       <div className="content">
-        <img src="../../public/assets/illos/d1-x-loveorlies.svg" alt="" className="content__collab-logo" />
+        <img src="/assets/illos/d1-x-loveorlies.svg" alt="" className="content__collab-logo" />
 
         {/* Logo clouds that move apart when logo appears */}
         <BlurImage src="/assets/illos/cloud-small.webp" alt="" className="logo-cloud logo-cloud--left" />
         <BlurImage src="/assets/illos/cloud-small.webp" alt="" className="logo-cloud logo-cloud--right flip-h" />
 
-        <BlurImage className="lovestruck-title-img" src="/assets/illos/love-struck-again-title.webp" alt="" loading="lazy" style={{ marginTop: '-70px' }} />
+        <BlurImage className="lovestruck-title-img" src="/assets/illos/love-struck-again-title.webp" alt="" loading="eager" fetchPriority="high" style={{ marginTop: '-70px' }} />
         <p className="subtitle">
           Are you the problem, or is everyone just unserious?
           <br/><br/>Find out what kind of lover you are and get your official dating diagnosis.
