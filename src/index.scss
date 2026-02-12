@@ -638,7 +638,7 @@ html {
   display: flex;
   flex-direction: row;
   gap: 16px;
-  width:100%;
+  width:calc(100% - 48px);
   justify-content: center;
   &--couples-mode-select{
     position:absolute;
@@ -4860,7 +4860,8 @@ html {
 
   .btn-group {
     flex-direction: column;
-    max-width: 280px;
+    // max-width: 280px;
+    width:calc(100% - 32px);
     margin: 0 auto;
     gap: 10px;
   }
@@ -5312,7 +5313,8 @@ html {
     }
 
     &__title {
-      font-size: 1.5rem;
+      font-size: 1.25rem;
+      font-weight: 500; margin-bottom: 8px;
     }
 
     &__desc {
