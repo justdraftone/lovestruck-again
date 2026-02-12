@@ -154,6 +154,17 @@ export function calculateCompatibility(
   let romanceScore = 0;
   let romanceMaxScore = 0;
 
+  // Debug logging
+  const partner1Questions = Object.keys(answers1).map(Number);
+  const partner2Questions = Object.keys(answers2).map(Number);
+  const overlap = partner1Questions.filter(q => partner2Questions.includes(q));
+
+  console.log('🔍 Compatibility Calculation Debug:');
+  console.log('Partner 1 answered questions:', partner1Questions);
+  console.log('Partner 2 answered questions:', partner2Questions);
+  console.log('Overlapping questions:', overlap);
+  console.log('Overlap count:', overlap.length);
+
   Object.keys(answers1).forEach(qIdStr => {
     const qId = Number(qIdStr);
     if (answers2[qId] !== undefined) {
@@ -195,6 +206,13 @@ export function calculateCompatibility(
     : 75;
 
   const overallPercentage = Math.min(99, Math.max(75, baseCompatibility));
+
+  console.log('📊 Score calculation:', {
+    totalScore,
+    maxPossibleScore,
+    baseCompatibility,
+    overallPercentage,
+  });
 
   // Calculate chemistry percentage using weighted scores
   let chemistryPercentage: number;
