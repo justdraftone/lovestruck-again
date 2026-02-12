@@ -352,7 +352,7 @@ export default function CouplesQuizRemote() {
           <button onClick={() => navigate('/')} className="back-btn">
             Back
           </button>
-          <img src="../../public/assets/illos/d1-x-loveorlies.svg" alt="" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} />
+          <img src="/assets/illos/d1-x-loveorlies.svg" alt="" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} />
         </div>
         {/* <div className="header header">
           <button className="back-btn" onClick={() => navigate('/couples')}>
@@ -527,7 +527,7 @@ export default function CouplesQuizRemote() {
 
                   {!hideCardContent && (
                     <div className="card-brand">
-                      <img src="../../public/assets/illos/d1-x-loveorlies-card.svg" alt="" />
+                      <img src="/assets/illos/d1-x-loveorlies-card.svg" alt="" />
                     </div>
                   )}
                 </div>

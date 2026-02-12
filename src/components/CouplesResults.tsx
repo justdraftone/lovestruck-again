@@ -190,7 +190,7 @@ export default function CouplesResults({
   return (
     <div className="page page--centered gradient-love" style={{ padding: '32px 24px' }}>
       <div className="header header__quiz header__quiz-couples-results">
-        <img src="../../public/assets/illos/d1-x-loveorlies.svg" alt="" onClick={onPlayAgain} style={{ cursor: 'pointer' }} />
+        <img src="/assets/illos/d1-x-loveorlies.svg" alt="" onClick={onPlayAgain} style={{ cursor: 'pointer' }} />
       </div>
       
       <div className="couples-results">

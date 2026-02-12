@@ -8,7 +8,7 @@ export default function CouplesModeSelect() {
       <div className="container container--couples-mode-select">
 
         <div className="header header__couples-quiz">
-          <img src="../../public/assets/illos/d1-x-loveorlies.svg" alt="" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} />
+          <img src="/assets/illos/d1-x-loveorlies.svg" alt="" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} />
           <button onClick={() => navigate('/')} className="back-btn">
             Back
           </button>

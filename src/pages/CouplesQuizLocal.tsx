@@ -106,7 +106,7 @@ export default function CouplesQuizLocal() {
         <button onClick={() => navigate('/couples')} className="back-btn">
           Back
         </button>
-        <img src="../../public/assets/illos/d1-x-loveorlies.svg" alt="" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} />
+        <img src="/assets/illos/d1-x-loveorlies.svg" alt="" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} />
       </div>
 
         <div className="card mode-card mode-card__couples-names mode-card__couples-names-form">
@@ -189,7 +189,7 @@ export default function CouplesQuizLocal() {
   return (
     <div className="page gradient-love">
       <div className="header header__couples-quiz-w-toggle" style={{ display: isCalculating ? 'none' : 'flex' }}>
-        <img src="../../public/assets/illos/d1-x-loveorlies.svg" alt="" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} />
+        <img src="/assets/illos/d1-x-loveorlies.svg" alt="" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} />
         <div className="question-set-toggle">
           <button
             onClick={handleToggleQuestionSet}
@@ -245,7 +245,7 @@ export default function CouplesQuizLocal() {
                     )}
 
                     <div className="card-brand">
-                      <img src="../../public/assets/illos/d1-x-loveorlies-card.svg" alt="" />
+                      <img src="/assets/illos/d1-x-loveorlies-card.svg" alt="" />
                     </div>
                   </div>
                 </div>
