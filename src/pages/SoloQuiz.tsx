@@ -39,8 +39,8 @@ export default function SoloQuiz() {
       return sourceQuestions.filter(q => selectedQuestionIds.includes(q.id));
     }
 
-    // Otherwise, select 7 random questions
-    const selected = selectRandomQuestions(sourceQuestions, 7);
+    // Otherwise, select 14 random questions
+    const selected = selectRandomQuestions(sourceQuestions, 14);
     setSelectedQuestions(selected.map(q => q.id));
     return selected;
   }, [questionSet, selectedQuestionIds, setSelectedQuestions]);

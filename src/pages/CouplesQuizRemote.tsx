@@ -97,8 +97,8 @@ export default function CouplesQuizRemote() {
       return sourceQuestions.filter(q => selectedQuestionIds.includes(q.id));
     }
 
-    // Otherwise, select 14 random questions (7 for each partner)
-    const selected = selectRandomQuestions(sourceQuestions, 14);
+    // Otherwise, select 28 random questions (14 for each partner)
+    const selected = selectRandomQuestions(sourceQuestions, 28);
     setSelectedQuestions(selected.map(q => q.id));
     return selected;
   }, [questionSet, selectedQuestionIds, setSelectedQuestions]);

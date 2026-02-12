@@ -59,6 +59,7 @@ body {
   overscroll-behavior-x: none;
   -webkit-overflow-scrolling: touch;
   overflow-x: hidden;
+  background: linear-gradient(180deg, $washed-pink 0%, $pink 40%);
 
   &::after {
     content: '';
