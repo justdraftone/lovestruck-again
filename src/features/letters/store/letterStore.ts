@@ -63,7 +63,7 @@ export const useLetterStore = create<LetterStore>()(
 
         // Save to Supabase for sharing across devices
         try {
-          await supabase.from('letters').insert({
+          const { data, error } = await supabase.from('letters').insert({
             id: letter.id,
             recipient_name: letter.recipientName,
             sender_name: letter.senderName,
@@ -72,8 +72,16 @@ export const useLetterStore = create<LetterStore>()(
             stickers: letter.stickers || null,
             created_at: new Date(letter.createdAt).toISOString(),
           });
+
+          if (error) {
+            console.error('❌ Supabase insert error:', error);
+            alert(`Failed to save letter to cloud: ${error.message}`);
+          } else {
+            console.log('✅ Letter saved to Supabase successfully');
+          }
         } catch (error) {
-          console.error('Failed to save letter to Supabase:', error);
+          console.error('❌ Failed to save letter to Supabase:', error);
+          alert('Failed to save letter to cloud. It will only work on this device.');
           // Continue anyway - letter will still be saved to localStorage
         }
 
