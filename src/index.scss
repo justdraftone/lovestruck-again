@@ -59,7 +59,7 @@ body {
   overscroll-behavior-x: none;
   -webkit-overflow-scrolling: touch;
   overflow-x: hidden;
-  background: linear-gradient(180deg, $washed-pink 0%, $pink 40%);
+  background: linear-gradient(180deg, $washed-pink 0%, $pink 100%);
 
   &::after {
     content: '';
@@ -185,7 +185,7 @@ html {
 
 // Utilities
 .gradient-love {
-  background: linear-gradient(180deg, $washed-pink 0%, $pink 40%);
+  background: linear-gradient(180deg, $washed-pink 0%, $pink 100%);
 }
 
 .gradient-love-reverse {
@@ -5225,7 +5225,7 @@ html {
     }
 
     .result-card__cloud {
-      bottom: -35%;
+      bottom: -20%;
       width: 320%;
       left: -20%;
       transform: translateX(-50%);
