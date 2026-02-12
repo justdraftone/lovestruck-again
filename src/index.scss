@@ -1252,14 +1252,20 @@ html {
 
   &::after{
     content: "";
-    position: fixed;
-    bottom:-20%;
+    position: absolute;
+    bottom: -20%;
+    left: 50%;
+    transform: translateX(-50%);
     width: 70rem;
-    height:90vh;
+    height: 120vh;
     background: #FAC47F;
-    border-radius:100%;
+    border-radius: 100%;
     filter: blur(120px);
     z-index: -9;
+    -webkit-transform: translateX(-50%) translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    will-change: transform;
   }
 }
 
