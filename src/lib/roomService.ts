@@ -22,7 +22,13 @@ export async function createRoom(playerName: string): Promise<{ room: Room; play
     .single();
 
   if (error) {
-    console.error('Error creating room:', error);
+    console.error('Error creating room. Error details:', {
+      error: error,
+      message: error?.message,
+      details: error?.details,
+      hint: error?.hint,
+      code: error?.code
+    });
     return null;
   }
 
@@ -44,7 +50,13 @@ export async function joinRoom(
     .single();
 
   if (findError || !existingRoom) {
-    console.error('Room not found:', findError);
+    console.error('Room not found. Error details:', {
+      error: findError,
+      message: findError?.message,
+      details: findError?.details,
+      hint: findError?.hint,
+      code: findError?.code
+    });
     return null;
   }
 
@@ -68,7 +80,13 @@ export async function joinRoom(
     .single();
 
   if (error) {
-    console.error('Error joining room:', error);
+    console.error('Error joining room. Error details:', {
+      error: error,
+      message: error?.message,
+      details: error?.details,
+      hint: error?.hint,
+      code: error?.code
+    });
     return null;
   }
 
