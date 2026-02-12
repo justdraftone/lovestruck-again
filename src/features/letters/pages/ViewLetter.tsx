@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useLetterStore } from '../store/letterStore';
+import { useLetterStore, Letter } from '../store/letterStore';
 import Envelope from '../components/Envelope';
 
 export default function ViewLetter() {
@@ -8,7 +8,7 @@ export default function ViewLetter() {
   const { letterId } = useParams<{ letterId: string }>();
   const { getLetter, setCurrentLetter } = useLetterStore();
   const [showActions, setShowActions] = useState(false);
-  const [letter, setLetter] = useState<ReturnType<typeof getLetter>>(null);
+  const [letter, setLetter] = useState<Letter | null>(null);
 
   useEffect(() => {
     const fetchLetter = async () => {

@@ -63,7 +63,7 @@ export const useLetterStore = create<LetterStore>()(
 
         // Save to Supabase for sharing across devices
         try {
-          const { data, error } = await supabase.from('letters').insert({
+          const { error } = await supabase.from('letters').insert({
             id: letter.id,
             recipient_name: letter.recipientName,
             sender_name: letter.senderName,

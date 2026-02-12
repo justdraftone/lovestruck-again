@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useLetterStore } from '../store/letterStore';
+import { useLetterStore, Letter } from '../store/letterStore';
 import { trackEvent } from '../../../lib/analytics';
 
 export default function SendLetter() {
   const navigate = useNavigate();
   const { letterId } = useParams<{ letterId: string }>();
   const { getLetter } = useLetterStore();
-  const [letter, setLetter] = useState<ReturnType<typeof getLetter>>(null);
+  const [letter, setLetter] = useState<Letter | null>(null);
   const letterLink = letterId ? `${window.location.origin}/letters/view/${letterId}` : '';
 
   useEffect(() => {
