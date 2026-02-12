@@ -1253,7 +1253,7 @@ html {
   &::after{
     content: "";
     position: absolute;
-    bottom: -20%;
+    bottom: -80%;
     left: 50%;
     transform: translateX(-50%);
     width: 70rem;
@@ -1262,10 +1262,10 @@ html {
     border-radius: 100%;
     filter: blur(120px);
     z-index: -9;
-    -webkit-transform: translateX(-50%) translateZ(0);
+    -webkit-transform: translateX(-50%);
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
-    will-change: transform;
+    pointer-events: none;
   }
 }
 
