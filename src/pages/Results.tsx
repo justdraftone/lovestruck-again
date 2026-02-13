@@ -22,6 +22,7 @@ export default function Results() {
     partner2Name,
     questionSet,
     selectedQuestionIds,
+    questionPairing,
     reset
   } = useQuizStore();
   const [showShareModal, setShowShareModal] = useState(false);
@@ -99,8 +100,8 @@ export default function Results() {
     if (!isCouplesLocal && !isCouplesRemote) return null;
     const ans1 = isCouplesLocal ? partner1Answers : remoteAnswers1;
     const ans2 = isCouplesLocal ? partner2Answers : remoteAnswers2;
-    return calculateCompatibility(ans1, ans2, displayName1, displayName2, usedQuestions);
-  }, [isCouplesLocal, isCouplesRemote, partner1Answers, partner2Answers, remoteAnswers1, remoteAnswers2, displayName1, displayName2, usedQuestions]);
+    return calculateCompatibility(ans1, ans2, displayName1, displayName2, usedQuestions, questionPairing);
+  }, [isCouplesLocal, isCouplesRemote, partner1Answers, partner2Answers, remoteAnswers1, remoteAnswers2, displayName1, displayName2, usedQuestions, questionPairing]);
 
   const handlePlayAgain = () => {
     reset();

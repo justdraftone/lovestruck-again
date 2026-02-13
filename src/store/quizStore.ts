@@ -8,6 +8,7 @@ interface QuizState {
   answers: Record<number, 'left' | 'right'>;
   questionSet: QuestionSet;
   selectedQuestionIds: number[];
+  questionPairing: Record<number, number>; // Maps partner1's question ID to partner2's question ID
 
   // Couples mode (local)
   currentPartner: 1 | 2;
@@ -25,6 +26,7 @@ interface QuizState {
   setMode: (mode: 'solo' | 'couples-local' | 'couples-remote') => void;
   setQuestionSet: (set: QuestionSet) => void;
   setSelectedQuestions: (ids: number[]) => void;
+  setQuestionPairing: (pairing: Record<number, number>) => void;
   setLobbyId: (id: string) => void;
   setPartnerId: (id: 1 | 2) => void;
   setPartnerNames: (partner1: string, partner2: string) => void;
@@ -42,6 +44,7 @@ export const useQuizStore = create<QuizState>()(
       answers: {},
       questionSet: 'global',
       selectedQuestionIds: [],
+      questionPairing: {},
       currentPartner: 1,
       partner1Name: 'Partner 1',
       partner2Name: 'Partner 2',
@@ -56,6 +59,8 @@ export const useQuizStore = create<QuizState>()(
       setQuestionSet: (questionSet) => set({ questionSet }),
 
       setSelectedQuestions: (ids) => set({ selectedQuestionIds: ids }),
+
+      setQuestionPairing: (pairing) => set({ questionPairing: pairing }),
 
       setLobbyId: (id) => set({ lobbyId: id }),
 
@@ -95,6 +100,7 @@ export const useQuizStore = create<QuizState>()(
         partnerId: null,
         partnerReady: false,
         selectedQuestionIds: [],
+        questionPairing: {},
       }),
     }),
     { name: 'lovestruck-quiz' }

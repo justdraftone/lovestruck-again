@@ -1,16 +1,11 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuizStore } from '../store/quizStore';
-import { nigeriaQuestions, globalQuestions, Question } from '../data/questions';
+import { nigeriaQuestions, globalQuestions } from '../data/questions';
 import { useSwipe } from '../hooks/useSwipe';
 import { trackEvent } from '../lib/analytics';
 import Loader from '../components/Loader';
-
-// Helper function to select random questions
-function selectRandomQuestions(questions: Question[], count: number): Question[] {
-  const shuffled = [...questions].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, count);
-}
+import { selectQuestionPairs, QuestionPair } from '../lib/questionPairing';
 
 export default function CouplesQuizLocal() {
   const navigate = useNavigate();
@@ -27,7 +22,8 @@ export default function CouplesQuizLocal() {
     questionSet,
     setQuestionSet,
     selectedQuestionIds,
-    setSelectedQuestions
+    setSelectedQuestions,
+    setQuestionPairing
   } = useQuizStore();
 
   const [namesSet, setNamesSet] = useState(false);
@@ -41,20 +37,27 @@ export default function CouplesQuizLocal() {
   const [partner1AnsweredCurrent, setPartner1AnsweredCurrent] = useState(false);
   const [partner2AnsweredCurrent, setPartner2AnsweredCurrent] = useState(false);
 
-  // Select questions based on question set
-  const questions = useMemo(() => {
+  // Select question pairs based on question set
+  const questionPairs = useMemo(() => {
     const sourceQuestions = questionSet === 'nigeria' ? nigeriaQuestions : globalQuestions;
 
-    // If we already have selected question IDs, use those
+    // If we already have selected question IDs, reconstruct pairs from them
     if (selectedQuestionIds.length > 0) {
-      return sourceQuestions.filter(q => selectedQuestionIds.includes(q.id));
+      // For now, just use empty pairs - this handles page refreshes
+      // In a real scenario, we'd also persist the pairing info
+      return [];
     }
 
-    // Select 14 questions that BOTH partners will answer (total 28 answers)
-    const selected = selectRandomQuestions(sourceQuestions, 14);
-    setSelectedQuestions(selected.map(q => q.id));
-    return selected;
-  }, [questionSet, selectedQuestionIds, setSelectedQuestions]);
+    // Select 14 question pairs (28 questions total, each partner gets 14 different questions)
+    const { pairs, questionPairing } = selectQuestionPairs(sourceQuestions, 14);
+
+    // Store the question IDs and pairing for results calculation
+    const allQuestionIds = pairs.flatMap(p => [p.partner1Question.id, p.partner2Question.id]);
+    setSelectedQuestions(allQuestionIds);
+    setQuestionPairing(questionPairing);
+
+    return pairs;
+  }, [questionSet, selectedQuestionIds, setSelectedQuestions, setQuestionPairing]);
 
   useEffect(() => {
     setMode('couples-local');
@@ -70,7 +73,7 @@ export default function CouplesQuizLocal() {
   };
 
   const processSwipe = (direction: 'left' | 'right') => {
-    if (swipeDirection) return;
+    if (swipeDirection || questionPairs.length === 0) return;
 
     // Add both classes immediately like the original
     setIsSwiping(direction);
@@ -78,7 +81,13 @@ export default function CouplesQuizLocal() {
 
     // Wait for transition to complete (400ms transform + some buffer)
     setTimeout(() => {
-      addAnswer(currentQuestion, direction);
+      // Get the current pair and the question ID for this partner
+      const currentPair = questionPairs[currentQuestion];
+      const questionId = currentPartner === 1
+        ? currentPair.partner1Question.id
+        : currentPair.partner2Question.id;
+
+      addAnswer(questionId, direction);
       setIsSwiping(null);
 
       // Track which partner answered
@@ -89,16 +98,16 @@ export default function CouplesQuizLocal() {
         setPartner2AnsweredCurrent(true);
       }
 
-      // Check if both partners have answered this question
+      // Check if both partners have answered this question pair
       const bothAnswered = (justAnsweredPartner === 1 && partner2AnsweredCurrent) ||
                            (justAnsweredPartner === 2 && partner1AnsweredCurrent);
 
       if (bothAnswered) {
-        // Both partners answered - move to next question
+        // Both partners answered - move to next question pair
         setPartner1AnsweredCurrent(false);
         setPartner2AnsweredCurrent(false);
 
-        if (currentQuestion + 1 >= questions.length) {
+        if (currentQuestion + 1 >= questionPairs.length) {
           // Show loader for 3 seconds before showing results
           setIsCalculating(true);
           setTimeout(() => {
@@ -110,7 +119,7 @@ export default function CouplesQuizLocal() {
           setSwipeDirection(null);
         }
       } else {
-        // Only one partner answered - switch to other partner for same question
+        // Only one partner answered - switch to other partner for same question pair
         switchPartner();
         setSwipeDirection(null);
       }
@@ -172,15 +181,20 @@ export default function CouplesQuizLocal() {
   }
 
   const currentPartnerName = currentPartner === 1 ? partner1Name : partner2Name;
-  const progress = ((currentQuestion + 1) / questions.length) * 100;
+  const progress = ((currentQuestion + 1) / questionPairs.length) * 100;
 
-  // Pre-render upcoming cards for deck effect
+  // Pre-render upcoming cards for deck effect - show the question for the current partner
   const upcomingCards = [0, 1, 2].map(offset => {
-    const questionIndex = currentQuestion + offset;
-    if (questionIndex >= questions.length) return null;
+    const pairIndex = currentQuestion + offset;
+    if (pairIndex >= questionPairs.length) return null;
+
+    const pair = questionPairs[pairIndex];
+    // Show the appropriate question based on current partner
+    const question = currentPartner === 1 ? pair.partner1Question : pair.partner2Question;
+
     return {
-      question: questions[questionIndex],
-      variant: (questionIndex % 4) + 1,
+      question,
+      variant: (pairIndex % 4) + 1,
       isTop: offset === 0
     };
   }).filter(Boolean);

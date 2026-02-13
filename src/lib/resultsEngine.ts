@@ -142,7 +142,8 @@ export function calculateCompatibility(
   answers2: Record<number, 'left' | 'right'>,
   name1: string,
   name2: string,
-  questions?: Array<{ id: number; text: string }>
+  questions?: Array<{ id: number; text: string }>,
+  questionPairing?: Record<number, number>
 ): CompatibilityReport {
   // Calculate weighted compatibility scores
   let totalScore = 0;
@@ -158,16 +159,28 @@ export function calculateCompatibility(
   const partner1Questions = Object.keys(answers1).map(Number);
   const partner2Questions = Object.keys(answers2).map(Number);
   const overlap = partner1Questions.filter(q => partner2Questions.includes(q));
+  const usingPairing = questionPairing && Object.keys(questionPairing).length > 0;
 
   console.log('🔍 Compatibility Calculation Debug:');
   console.log('Partner 1 answered questions:', partner1Questions);
   console.log('Partner 2 answered questions:', partner2Questions);
   console.log('Overlapping questions:', overlap);
   console.log('Overlap count:', overlap.length);
+  console.log('Using question pairing:', usingPairing);
+  if (usingPairing) {
+    console.log('Question pairing map:', questionPairing);
+  }
 
   Object.keys(answers1).forEach(qIdStr => {
     const qId = Number(qIdStr);
-    if (answers2[qId] !== undefined) {
+
+    // Determine which partner 2 question to compare with
+    let partner2QuestionId = qId;
+    if (usingPairing && questionPairing![qId]) {
+      partner2QuestionId = questionPairing![qId];
+    }
+
+    if (answers2[partner2QuestionId] !== undefined) {
       let polarity: QuestionPolarity = 'neutral';
       let category: 'chemistry' | 'romance' | 'both' = 'both';
 
@@ -180,8 +193,8 @@ export function calculateCompatibility(
         }
       }
 
-      // Calculate weighted score for this question
-      const questionScore = calculateQuestionScore(answers1[qId], answers2[qId], polarity);
+      // Calculate weighted score for this question (comparing paired answers)
+      const questionScore = calculateQuestionScore(answers1[qId], answers2[partner2QuestionId], polarity);
       const questionMaxScore = polarity === 'red-flag' || polarity === 'green-flag' ? 1.5 : 1.0;
 
       totalScore += questionScore;
