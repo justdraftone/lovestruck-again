@@ -38,6 +38,8 @@ export default function CouplesQuizLocal() {
   const [showExplainer, setShowExplainer] = useState(false);
   const [isExplainerExiting, setIsExplainerExiting] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
+  const [partner1AnsweredCurrent, setPartner1AnsweredCurrent] = useState(false);
+  const [partner2AnsweredCurrent, setPartner2AnsweredCurrent] = useState(false);
 
   // Select questions based on question set
   const questions = useMemo(() => {
@@ -48,8 +50,8 @@ export default function CouplesQuizLocal() {
       return sourceQuestions.filter(q => selectedQuestionIds.includes(q.id));
     }
 
-    // Otherwise, select 28 random questions (14 for each partner)
-    const selected = selectRandomQuestions(sourceQuestions, 28);
+    // Select 14 questions that BOTH partners will answer (total 28 answers)
+    const selected = selectRandomQuestions(sourceQuestions, 14);
     setSelectedQuestions(selected.map(q => q.id));
     return selected;
   }, [questionSet, selectedQuestionIds, setSelectedQuestions]);
@@ -79,14 +81,36 @@ export default function CouplesQuizLocal() {
       addAnswer(currentQuestion, direction);
       setIsSwiping(null);
 
-      if (currentQuestion + 1 >= questions.length) {
-        // Show loader for 3 seconds before showing results
-        setIsCalculating(true);
-        setTimeout(() => {
-          navigate('/results/couples-local');
-        }, 3000);
+      // Track which partner answered
+      const justAnsweredPartner = currentPartner;
+      if (justAnsweredPartner === 1) {
+        setPartner1AnsweredCurrent(true);
       } else {
-        nextQuestion();
+        setPartner2AnsweredCurrent(true);
+      }
+
+      // Check if both partners have answered this question
+      const bothAnswered = (justAnsweredPartner === 1 && partner2AnsweredCurrent) ||
+                           (justAnsweredPartner === 2 && partner1AnsweredCurrent);
+
+      if (bothAnswered) {
+        // Both partners answered - move to next question
+        setPartner1AnsweredCurrent(false);
+        setPartner2AnsweredCurrent(false);
+
+        if (currentQuestion + 1 >= questions.length) {
+          // Show loader for 3 seconds before showing results
+          setIsCalculating(true);
+          setTimeout(() => {
+            navigate('/results/couples-local');
+          }, 3000);
+        } else {
+          nextQuestion();
+          switchPartner();
+          setSwipeDirection(null);
+        }
+      } else {
+        // Only one partner answered - switch to other partner for same question
         switchPartner();
         setSwipeDirection(null);
       }
