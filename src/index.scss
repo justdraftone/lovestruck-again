@@ -69,9 +69,9 @@ $card-gradients: (
 
 body {
   font-family: system-ui, -apple-system, sans-serif;
-  overscroll-behavior: none; // Prevent rubber band scrolling
-  overscroll-behavior-x: none;
-  -webkit-overflow-scrolling: touch;
+  // overscroll-behavior: none; // Prevent rubber band scrolling
+  // overscroll-behavior-x: none;
+  // -webkit-overflow-scrolling: touch;
   overflow-x: hidden;
   background: $pink; // Fallback
   background: -webkit-linear-gradient(180deg, $washed-pink 0%, $pink 100%);
@@ -91,7 +91,7 @@ body {
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
   // Prevent pull-to-refresh
-  overscroll-behavior-y: contain;
+  // overscroll-behavior-y: contain;
 
   &::after {
     content: '';
@@ -119,20 +119,26 @@ html {
   overflow-x: hidden;
   width: 100%;
   height: 100%;
-  // Prevent rubber band scrolling
-  position: fixed;
-  overflow: hidden;
+  // Allow scrolling by default
+  position: relative;
+  // overflow-y: auto;
 }
 
-// Allow scrolling on letter pages
-html:has(.letter-create),
-html:has(.letter-open),
-html:has(.letter-sent),
-html:has(.letter-view),
-html:has(.letter-home) {
-  position: relative;
-  overflow-y: auto;
+body {
   overflow-x: hidden;
+}
+
+// Prevent rubber band scrolling only on quiz pages with card swiping
+html:has(.quiz-card),
+html:has(.page--main-homepage) {
+  position: fixed;
+  overflow: hidden;
+
+  body {
+    position: fixed;
+    width: 100%;
+    overflow: hidden;
+  }
 }
 
 // Page transitions
@@ -343,7 +349,6 @@ html:has(.letter-home) {
     padding-top:64px;
     // background: linear-gradient( #551530, #CB3F33 50%) !important;
     z-index:9;
-    overflow:hidden;
     display:flex;
     flex-direction: column;
     align-items:center;
@@ -4886,6 +4891,10 @@ html:has(.letter-home) {
     &--centered {
       padding: 16px;
       padding-top: 140px;
+      // Allow scrolling on results pages
+      justify-content: flex-start;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
   }
 
