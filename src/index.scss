@@ -5077,6 +5077,13 @@ html:has(.letter-home) {
     align-items: center;
     justify-content: center;
     position: relative;
+    margin-top:10%;
+  }
+
+  // Remove top margin in couples quiz
+  .page:has(.header__couples-quiz-w-toggle) .card-stack,
+  .page:has(.header__couples-quiz) .card-stack {
+    margin-top: 0;
   }
 
   .card-content {
