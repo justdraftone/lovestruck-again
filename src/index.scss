@@ -73,7 +73,13 @@ body {
   overscroll-behavior-x: none;
   -webkit-overflow-scrolling: touch;
   overflow-x: hidden;
+  background: $pink; // Fallback
+  background: -webkit-linear-gradient(180deg, $washed-pink 0%, $pink 100%);
   background: linear-gradient(180deg, $washed-pink 0%, $pink 100%);
+  // iOS Safari: Ensure gradient displays properly
+  background-attachment: fixed;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
   // iOS Safari: Prevent text size adjustment
   -webkit-text-size-adjust: 100%;
   // iOS Safari: Better font rendering
@@ -218,12 +224,22 @@ html {
   background: $pink; // Fallback for older browsers
   background: -webkit-linear-gradient(180deg, $washed-pink 0%, $pink 100%); // Safari
   background: linear-gradient(180deg, $washed-pink 0%, $pink 100%);
+  // iOS Safari: Ensure gradient covers full viewport
+  background-attachment: fixed;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  min-height: 100vh;
 }
 
 .gradient-love-reverse {
   background: $washed-pink; // Fallback
   background: -webkit-linear-gradient(180deg, $pink 40%, $washed-pink 0%); // Safari
   background: linear-gradient(180deg, $pink 40%, $washed-pink 0%);
+  // iOS Safari: Ensure gradient covers full viewport
+  background-attachment: fixed;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  min-height: 100vh;
 }
 
 // Layout
@@ -1330,16 +1346,16 @@ html {
   &::after{
     content: "";
     position: absolute;
-    bottom: -20%;
+    bottom: -30%;
     left: 50%;
     transform: translateX(-50%);
+    -webkit-transform: translateX(-50%);
     width: 70rem;
-    height: 120vh;
+    height: 90vh;
     background: #FAC47F;
     border-radius: 100%;
     filter: blur(120px);
     z-index: -9;
-    -webkit-transform: translateX(-50%);
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
     pointer-events: none;
