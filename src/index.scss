@@ -96,7 +96,11 @@ body {
   &::after {
     content: '';
     position: fixed;
-    inset: 0;
+    // iOS Safari: Use explicit positioning instead of inset shorthand
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
     background-image: url('/assets/grain.png');
     background-size: 200px 200px;
     background-repeat: repeat;
@@ -104,6 +108,10 @@ body {
     opacity: 0.4;
     pointer-events: none;
     z-index: 9999;
+    // iOS Safari: Improve rendering performance
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    will-change: opacity;
   }
 }
 
