@@ -117,10 +117,15 @@ export const useLetterStore = create<LetterStore>()(
             .from('letters')
             .select('*')
             .eq('id', id)
-            .single();
+            .maybeSingle();
 
-          if (error || !data) {
-            console.error('Letter not found in Supabase:', error);
+          if (error) {
+            console.error('Error fetching letter from Supabase:', error);
+            return null;
+          }
+
+          if (!data) {
+            // Letter not found - this is normal, not an error
             return null;
           }
 

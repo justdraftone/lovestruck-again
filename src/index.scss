@@ -124,6 +124,17 @@ html {
   overflow: hidden;
 }
 
+// Allow scrolling on letter pages
+html:has(.letter-create),
+html:has(.letter-open),
+html:has(.letter-sent),
+html:has(.letter-view),
+html:has(.letter-home) {
+  position: relative;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
 // Page transitions
 .page {
   animation: pageEnter 0.25s ease-out;
@@ -342,7 +353,11 @@ html {
 
 .quiz-card {
   position: absolute;
-  inset: 0;
+  // iOS Safari: Use explicit positioning instead of inset
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   border-radius: 32px;
   box-shadow: inset -8px -8px 10px 0px #00000030,
               inset 0 0 0 6px #FFFFFF;
@@ -1033,7 +1048,11 @@ html {
     height: 70rem;
     background: #FAC47F;
     border-radius:100%;
+    -webkit-filter: blur(120px);
     filter: blur(120px);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    will-change: filter;
     z-index: 0;
     &--results{
       // position:absolute;
@@ -1362,10 +1381,12 @@ html {
     height: 90vh;
     background: #FAC47F;
     border-radius: 100%;
+    -webkit-filter: blur(120px);
     filter: blur(120px);
     z-index: -9;
-    -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    will-change: filter;
     pointer-events: none;
   }
 }
@@ -1967,7 +1988,11 @@ html {
   &::before {
     content: '';
     position: absolute;
-    inset: 0;
+    // iOS Safari: Use explicit positioning instead of inset
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
     background-image: url('/assets/grain.png');
     background-size: 200px 200px;
     background-repeat: repeat;
@@ -1976,6 +2001,9 @@ html {
     pointer-events: none;
     z-index: 1;
     border-radius: inherit;
+    // iOS Safari: Improve rendering
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
   }
   opacity: 0;
   transform: translateY(20px) scale(0.95);
@@ -2878,12 +2906,18 @@ html {
 }
 
 // Create Letter Page
+// Allow scrolling on letter-create page
 .letter-create {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
   padding: 24px;
   z-index:9;
+
+  // Override the global overflow: hidden on body/html for this page
+  :root {
+    overflow: auto;
+  }
 
   &__header {
     display: flex;
@@ -3940,7 +3974,11 @@ html {
   &::before {
     content: '';
     position: absolute;
-    inset: 0;
+    // iOS Safari: Use explicit positioning instead of inset
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
     background-image: url('/assets/grain.png');
     background-size: 200px 200px;
     background-repeat: repeat;
@@ -3949,6 +3987,9 @@ html {
     pointer-events: none;
     z-index: 1;
     border-radius: inherit;
+    // iOS Safari: Improve rendering
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
   }
 
   &__badge {
