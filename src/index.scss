@@ -4957,6 +4957,15 @@ html:has(.letter-home) {
         transform:none;
       }
     }
+
+    &__quiz{
+      flex-direction:column !important;
+      img{
+        position:static;
+        margin:auto;
+        transform:none;
+      }
+    }
   }
 
   // Question set toggle
