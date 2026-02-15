@@ -5,7 +5,8 @@ import { nigeriaQuestions, globalQuestions } from '../data/questions';
 import { useSwipe } from '../hooks/useSwipe';
 import { trackEvent } from '../lib/analytics';
 import Loader from '../components/Loader';
-import { selectQuestionPairs, QuestionPair } from '../lib/questionPairing';
+// TODO: Uncomment for production
+// import { selectQuestionPairs } from '../lib/questionPairing';
 
 export default function CouplesQuizLocal() {
   const navigate = useNavigate();
@@ -34,30 +35,63 @@ export default function CouplesQuizLocal() {
   const [showExplainer, setShowExplainer] = useState(false);
   const [isExplainerExiting, setIsExplainerExiting] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
-  const [partner1AnsweredCurrent, setPartner1AnsweredCurrent] = useState(false);
-  const [partner2AnsweredCurrent, setPartner2AnsweredCurrent] = useState(false);
 
-  // Select question pairs based on question set
+  // Select question pairs for compatibility calculation
   const questionPairs = useMemo(() => {
     const sourceQuestions = questionSet === 'nigeria' ? nigeriaQuestions : globalQuestions;
 
-    // If we already have selected question IDs, reconstruct pairs from them
-    if (selectedQuestionIds.length > 0) {
-      // For now, just use empty pairs - this handles page refreshes
-      // In a real scenario, we'd also persist the pairing info
-      return [];
-    }
+    // TESTING: Use 8 pairs (16 questions total)
+    // TODO: Change back to 14 for production
+    const PAIR_COUNT = 8; // Change back to 14
 
-    // Select 14 question pairs (28 questions total, each partner gets 14 different questions)
-    const { pairs, questionPairing } = selectQuestionPairs(sourceQuestions, 14);
+    // TESTING: Both partners answer SAME questions for easy testing
+    // TODO: Uncomment the line below for production (different questions same type)
+    // const { pairs, questionPairing } = selectQuestionPairs(sourceQuestions, PAIR_COUNT);
+
+    // Select random questions
+    const shuffled = [...sourceQuestions].sort(() => Math.random() - 0.5);
+    const selected = shuffled.slice(0, PAIR_COUNT);
+
+    // Create two different random orderings for each partner
+    const partner1Questions = [...selected].sort(() => Math.random() - 0.5);
+    const partner2Questions = [...selected].sort(() => Math.random() - 0.5);
+
+    // Create pairs by combining the shuffled orders
+    const pairs = partner1Questions.map((q1, index) => ({
+      partner1Question: q1,
+      partner2Question: partner2Questions[index], // Different order for partner 2
+      type: 'same'
+    }));
+
+    // Create pairing map (each question maps to itself for compatibility)
+    const questionPairing: Record<number, number> = {};
+    selected.forEach(q => {
+      questionPairing[q.id] = q.id; // Maps to itself
+    });
 
     // Store the question IDs and pairing for results calculation
     const allQuestionIds = pairs.flatMap(p => [p.partner1Question.id, p.partner2Question.id]);
     setSelectedQuestions(allQuestionIds);
     setQuestionPairing(questionPairing);
 
+    console.log('📝 Question pairing setup:', {
+      pairCount: pairs.length,
+      totalQuestions: allQuestionIds.length,
+      pairingMapSize: Object.keys(questionPairing).length,
+      samplePairing: Object.entries(questionPairing).slice(0, 4),
+      testMode: 'SAME questions for both partners'
+    });
+
     return pairs;
-  }, [questionSet, selectedQuestionIds, setSelectedQuestions, setQuestionPairing]);
+  }, [questionSet, setSelectedQuestions, setQuestionPairing]);
+
+  // Flatten pairs into a continuous stack of questions
+  const questions = useMemo(() => {
+    return questionPairs.flatMap(pair => [
+      pair.partner1Question,
+      pair.partner2Question
+    ]);
+  }, [questionPairs]);
 
   useEffect(() => {
     setMode('couples-local');
@@ -73,55 +107,27 @@ export default function CouplesQuizLocal() {
   };
 
   const processSwipe = (direction: 'left' | 'right') => {
-    if (swipeDirection || questionPairs.length === 0) return;
+    if (swipeDirection || questions.length === 0) return;
 
-    // Add both classes immediately like the original
     setIsSwiping(direction);
     setSwipeDirection(direction);
 
-    // Wait for transition to complete (400ms transform + some buffer)
     setTimeout(() => {
-      // Get the current pair and the question ID for this partner
-      const currentPair = questionPairs[currentQuestion];
-      const questionId = currentPartner === 1
-        ? currentPair.partner1Question.id
-        : currentPair.partner2Question.id;
-
-      addAnswer(questionId, direction);
+      // Record answer for current question
+      addAnswer(questions[currentQuestion].id, direction);
       setIsSwiping(null);
 
-      // Track which partner answered
-      const justAnsweredPartner = currentPartner;
-      if (justAnsweredPartner === 1) {
-        setPartner1AnsweredCurrent(true);
+      if (currentQuestion + 1 >= questions.length) {
+        // Show loader before showing results
+        setIsCalculating(true);
+        setTimeout(() => {
+          navigate('/results/couples-local');
+        }, 3000);
       } else {
-        setPartner2AnsweredCurrent(true);
-      }
-
-      // Check if both partners have answered this question pair
-      const bothAnswered = (justAnsweredPartner === 1 && partner2AnsweredCurrent) ||
-                           (justAnsweredPartner === 2 && partner1AnsweredCurrent);
-
-      if (bothAnswered) {
-        // Both partners answered - move to next question pair
-        setPartner1AnsweredCurrent(false);
-        setPartner2AnsweredCurrent(false);
-
-        if (currentQuestion + 1 >= questionPairs.length) {
-          // Show loader for 3 seconds before showing results
-          setIsCalculating(true);
-          setTimeout(() => {
-            navigate('/results/couples-local');
-          }, 3000);
-        } else {
-          nextQuestion();
-          switchPartner();
-          setSwipeDirection(null);
-        }
-      } else {
-        // Only one partner answered - switch to other partner for same question pair
-        switchPartner();
-        setSwipeDirection(null);
+        // Move to next card in the stack
+        nextQuestion();
+        switchPartner(); // Alternate partners
+        setTimeout(() => setSwipeDirection(null), 0);
       }
     }, 450);
   };
@@ -131,10 +137,27 @@ export default function CouplesQuizLocal() {
 
   useSwipe({ onSwipeLeft: handleSwipeLeft, onSwipeRight: handleSwipeRight });
 
+  const currentPartnerName = currentPartner === 1 ? partner1Name : partner2Name;
+  const progress = ((currentQuestion + 1) / questions.length) * 100;
+
+  // Pre-render upcoming cards for deck effect
+  const upcomingCards = useMemo(() => {
+    return [0, 1, 2].map(offset => {
+      const questionIndex = currentQuestion + offset;
+      if (questionIndex >= questions.length) return null;
+
+      return {
+        question: questions[questionIndex],
+        variant: (questionIndex % 4) + 1,
+        isTop: offset === 0
+      };
+    }).filter(Boolean);
+  }, [currentQuestion, questions]);
+
   if (!namesSet) {
     return (
       <div className="page page--centered gradient-love">
-      
+
       <div className="header header__couples-quiz header__couples-solo-lobby">
         <button onClick={() => navigate('/couples')} className="back-btn">
           Back
@@ -179,25 +202,6 @@ export default function CouplesQuizLocal() {
       </div>
     );
   }
-
-  const currentPartnerName = currentPartner === 1 ? partner1Name : partner2Name;
-  const progress = ((currentQuestion + 1) / questionPairs.length) * 100;
-
-  // Pre-render upcoming cards for deck effect - show the question for the current partner
-  const upcomingCards = [0, 1, 2].map(offset => {
-    const pairIndex = currentQuestion + offset;
-    if (pairIndex >= questionPairs.length) return null;
-
-    const pair = questionPairs[pairIndex];
-    // Show the appropriate question based on current partner
-    const question = currentPartner === 1 ? pair.partner1Question : pair.partner2Question;
-
-    return {
-      question,
-      variant: (pairIndex % 4) + 1,
-      isTop: offset === 0
-    };
-  }).filter(Boolean);
 
   const dismissExplainer = () => {
     setIsExplainerExiting(true);

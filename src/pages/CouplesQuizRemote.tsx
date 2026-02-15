@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { nigeriaQuestions, globalQuestions, Question } from '../data/questions';
+import { nigeriaQuestions, globalQuestions } from '../data/questions';
 import { useSwipe } from '../hooks/useSwipe';
 import { useQuizStore } from '../store/quizStore';
 import { trackEvent } from '../lib/analytics';
@@ -14,12 +14,8 @@ import {
 } from '../lib/roomService';
 import { Room } from '../lib/supabase';
 import { RealtimeChannel } from '@supabase/supabase-js';
-
-// Helper function to select random questions
-function selectRandomQuestions(questions: Question[], count: number): Question[] {
-  const shuffled = [...questions].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, count);
-}
+// TODO: Uncomment for production
+// import { selectQuestionPairs } from '../lib/questionPairing';
 
 type GamePhase = 'waiting' | 'playing' | 'waiting-partner';
 
@@ -32,7 +28,8 @@ export default function CouplesQuizRemote() {
     nextQuestion,
     questionSet,
     selectedQuestionIds,
-    setSelectedQuestions
+    setSelectedQuestions,
+    setQuestionPairing
   } = useQuizStore();
 
   const joinCode = searchParams.get('join');
@@ -89,20 +86,52 @@ export default function CouplesQuizRemote() {
     });
   }, [partnerNum, room?.current_turn, isMyTurn, phase, isHost]);
 
-  // Select questions based on question set
+  // Select questions for remote quiz - both partners answer the same questions
   const questions = useMemo(() => {
     const sourceQuestions = questionSet === 'nigeria' ? nigeriaQuestions : globalQuestions;
 
-    // If we already have selected question IDs, use those
+    // If we already have selected questions, use those
     if (selectedQuestionIds.length > 0) {
-      return sourceQuestions.filter(q => selectedQuestionIds.includes(q.id));
+      const baseQuestions = sourceQuestions.filter(q => selectedQuestionIds.includes(q.id));
+
+      // Guest (joiner) gets randomized order, Host keeps original order
+      if (!isHost) {
+        const shuffledForGuest = [...baseQuestions].sort(() => Math.random() - 0.5);
+        console.log('📝 Guest question order randomized');
+        return shuffledForGuest;
+      }
+
+      return baseQuestions;
     }
 
-    // Otherwise, select 28 random questions (both partners answer all 28)
-    const selected = selectRandomQuestions(sourceQuestions, 28);
-    setSelectedQuestions(selected.map(q => q.id));
-    return selected;
-  }, [questionSet, selectedQuestionIds, setSelectedQuestions]);
+    // TESTING: Use 8 questions (both partners answer the same 8)
+    // TODO: Change back to 14 for production
+    const QUESTION_COUNT = 8; // Change back to 14
+
+    // Host selects and sets up the questions
+    const shuffled = [...sourceQuestions].sort(() => Math.random() - 0.5);
+    const selected = shuffled.slice(0, QUESTION_COUNT);
+    const selectedQuestions = [...selected].sort(() => Math.random() - 0.5);
+
+    // Create pairing map (each question maps to itself - both partners answer the same question)
+    const questionPairing: Record<number, number> = {};
+    selectedQuestions.forEach(q => {
+      questionPairing[q.id] = q.id; // Maps to itself
+    });
+
+    // Store the question IDs and pairing for results calculation
+    setSelectedQuestions(selectedQuestions.map(q => q.id));
+    setQuestionPairing(questionPairing);
+
+    console.log('📝 Question setup (remote - host):', {
+      questionCount: selectedQuestions.length,
+      questionIds: selectedQuestions.map(q => q.id),
+      pairingMapSize: Object.keys(questionPairing).length,
+      testMode: 'Both partners answer SAME questions'
+    });
+
+    return selectedQuestions;
+  }, [questionSet, selectedQuestionIds, setSelectedQuestions, setQuestionPairing, isHost]);
 
   useEffect(() => {
     setMode('couples-remote');
@@ -534,7 +563,7 @@ export default function CouplesQuizRemote() {
                   index === 0 && swipeDirection === 'right' ? 'quiz-card--swipe-right' :
                   index === 0 && isSwiping === 'left' ? 'quiz-card--swiping-left' :
                   index === 0 && isSwiping === 'right' ? 'quiz-card--swiping-right' : ''
-                } ${index === 0 && !isMyTurn ? 'quiz-card--dimmed' : ''} ${partnerNum === 2 ? 'flip-h' : ''}`}
+                } ${index === 0 && !isMyTurn ? 'quiz-card--dimmed' : ''} ${!isHost ? 'flip-h' : ''}`}
               >
                 <div className="card-content">
                   {!hideCardContent && (

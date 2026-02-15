@@ -93,13 +93,16 @@ type QuestionPolarity = 'red-flag' | 'green-flag' | 'neutral';
 
 function categorizeQuestion(questionText: string): 'chemistry' | 'romance' | 'both' {
   const lowerText = questionText.toLowerCase();
-  const hasChemistry = CHEMISTRY_KEYWORDS.some(keyword => lowerText.includes(keyword));
-  const hasRomance = ROMANCE_KEYWORDS.some(keyword => lowerText.includes(keyword));
+  const chemistryCount = CHEMISTRY_KEYWORDS.filter(keyword => lowerText.includes(keyword)).length;
+  const romanceCount = ROMANCE_KEYWORDS.filter(keyword => lowerText.includes(keyword)).length;
 
-  if (hasChemistry && hasRomance) return 'both';
-  if (hasChemistry) return 'chemistry';
-  if (hasRomance) return 'romance';
-  return 'both'; // Default to counting for both if unclear
+  // Be more exclusive - prioritize the dominant category
+  if (chemistryCount > romanceCount && chemistryCount > 0) return 'chemistry';
+  if (romanceCount > chemistryCount && romanceCount > 0) return 'romance';
+  if (chemistryCount > 0 && romanceCount > 0) return 'both';
+
+  // If unclear, default to chemistry (communication/compatibility)
+  return 'chemistry';
 }
 
 function getQuestionPolarity(questionText: string): QuestionPolarity {
@@ -112,31 +115,6 @@ function getQuestionPolarity(questionText: string): QuestionPolarity {
   return 'neutral';
 }
 
-function calculateQuestionScore(
-  answer1: 'left' | 'right',
-  answer2: 'left' | 'right',
-  polarity: QuestionPolarity
-): number {
-  const bothYes = answer1 === 'right' && answer2 === 'right';
-  const bothNo = answer1 === 'left' && answer2 === 'left';
-
-  if (polarity === 'red-flag') {
-    // Red flag questions: Both saying "no" is great, both "yes" is bad
-    if (bothNo) return 1.5; // Extra points for both rejecting red flags
-    if (bothYes) return 0.7; // Both accepting red flags - not ideal but not terrible
-    return 0.6; // Mismatch on red flags - one person sets boundaries
-  } else if (polarity === 'green-flag') {
-    // Green flag questions: Both saying "yes" is great, both "no" is concerning
-    if (bothYes) return 1.5; // Extra points for both embracing green flags
-    if (bothNo) return 0.8; // Both rejecting healthy behaviors - room to grow together
-    return 0.9; // Mismatch is okay, one person can lead by example
-  } else {
-    // Neutral questions: Just matching preferences
-    if (bothYes || bothNo) return 1.0; // Standard match
-    return 0.7; // Different preferences can complement each other
-  }
-}
-
 export function calculateCompatibility(
   answers1: Record<number, 'left' | 'right'>,
   answers2: Record<number, 'left' | 'right'>,
@@ -145,30 +123,39 @@ export function calculateCompatibility(
   questions?: Array<{ id: number; text: string }>,
   questionPairing?: Record<number, number>
 ): CompatibilityReport {
-  // Calculate weighted compatibility scores
-  let totalScore = 0;
-  let maxPossibleScore = 0;
+  // New scoring approach: Base score + bonus for agreement
+  const BASE_SCORE = 75;
+  const MAX_ADDITIONAL = 24; // Can add up to 24% to reach 99%
+
+  let bonusPoints = 0;
+  let maxBonusPoints = 0;
 
   // Track chemistry and romance specific scores
-  let chemistryScore = 0;
-  let chemistryMaxScore = 0;
-  let romanceScore = 0;
-  let romanceMaxScore = 0;
+  let chemistryBonus = 0;
+  let chemistryMaxBonus = 0;
+  let romanceBonus = 0;
+  let romanceMaxBonus = 0;
 
   // Debug logging
   const partner1Questions = Object.keys(answers1).map(Number);
   const partner2Questions = Object.keys(answers2).map(Number);
-  const overlap = partner1Questions.filter(q => partner2Questions.includes(q));
   const usingPairing = questionPairing && Object.keys(questionPairing).length > 0;
 
   console.log('🔍 Compatibility Calculation Debug:');
   console.log('Partner 1 answered questions:', partner1Questions);
   console.log('Partner 2 answered questions:', partner2Questions);
-  console.log('Overlapping questions:', overlap);
-  console.log('Overlap count:', overlap.length);
   console.log('Using question pairing:', usingPairing);
+
   if (usingPairing) {
-    console.log('Question pairing map:', questionPairing);
+    console.log('Question pairing map (first 5):', Object.entries(questionPairing!).slice(0, 10));
+    // Show what will actually be compared
+    const comparisons = partner1Questions.map(qId => ({
+      partner1Q: qId,
+      partner2Q: questionPairing![qId],
+      willCompare: !!questionPairing![qId] && answers2[questionPairing![qId]] !== undefined
+    })).filter(c => c.willCompare);
+    console.log(`✅ Will compare ${comparisons.length} question pairs`);
+    console.log('Sample comparisons:', comparisons.slice(0, 3));
   }
 
   Object.keys(answers1).forEach(qIdStr => {
@@ -179,6 +166,8 @@ export function calculateCompatibility(
     if (usingPairing && questionPairing![qId]) {
       partner2QuestionId = questionPairing![qId];
     }
+
+    console.log(`Checking Q${qId}: partner1=${answers1[qId]}, partner2=${answers2[partner2QuestionId]}`);
 
     if (answers2[partner2QuestionId] !== undefined) {
       let polarity: QuestionPolarity = 'neutral';
@@ -193,67 +182,98 @@ export function calculateCompatibility(
         }
       }
 
-      // Calculate weighted score for this question (comparing paired answers)
-      const questionScore = calculateQuestionScore(answers1[qId], answers2[partner2QuestionId], polarity);
-      const questionMaxScore = polarity === 'red-flag' || polarity === 'green-flag' ? 1.5 : 1.0;
+      const answer1 = answers1[qId];
+      const answer2 = answers2[partner2QuestionId];
+      const bothYes = answer1 === 'right' && answer2 === 'right';
+      const bothNo = answer1 === 'left' && answer2 === 'left';
 
-      totalScore += questionScore;
-      maxPossibleScore += questionMaxScore;
+      // Calculate bonus points based on agreement type
+      let questionBonus = 0;
+      const questionMaxBonus = 1.0; // Each question can contribute max 1.0 bonus points
+
+      if (polarity === 'red-flag') {
+        // Red flag: Both saying "no" is perfect
+        if (bothNo) questionBonus = 1.0; // Perfect agreement
+        else if (bothYes) questionBonus = 0.1; // Both accepting red flags
+        else questionBonus = 0.2; // Disagreement
+      } else if (polarity === 'green-flag') {
+        // Green flag: Both saying "yes" is perfect
+        if (bothYes) questionBonus = 1.0; // Perfect agreement
+        else if (bothNo) questionBonus = 0.2; // Both rejecting healthy behavior
+        else questionBonus = 0.3; // Disagreement
+      } else {
+        // Neutral: Any agreement is good
+        if (bothYes || bothNo) questionBonus = 0.8; // Agreement
+        else questionBonus = 0.2; // Different preferences
+      }
+
+      bonusPoints += questionBonus;
+      maxBonusPoints += questionMaxBonus;
+
+      console.log(`  → Bonus: ${questionBonus.toFixed(2)}/${questionMaxBonus.toFixed(2)} (${polarity}, ${category})`);
 
       // Track by category
       if (category === 'chemistry' || category === 'both') {
-        chemistryScore += questionScore;
-        chemistryMaxScore += questionMaxScore;
+        chemistryBonus += questionBonus;
+        chemistryMaxBonus += questionMaxBonus;
       }
 
       if (category === 'romance' || category === 'both') {
-        romanceScore += questionScore;
-        romanceMaxScore += questionMaxScore;
+        romanceBonus += questionBonus;
+        romanceMaxBonus += questionMaxBonus;
       }
+    } else {
+      console.log(`  → SKIPPED (no partner2 answer for Q${partner2QuestionId})`);
     }
   });
 
-  // Calculate base compatibility (75-99% range with better scaling)
-  const baseCompatibility = maxPossibleScore > 0
-    ? Math.round((totalScore / maxPossibleScore) * 100)
-    : 75;
+  // Scale bonus points to fit within MAX_ADDITIONAL (0-25%)
+  const scaledAdditional = maxBonusPoints > 0
+    ? (bonusPoints / maxBonusPoints) * MAX_ADDITIONAL
+    : 0;
 
-  const overallPercentage = Math.min(99, Math.max(75, baseCompatibility));
+  const overallPercentage = Math.round(BASE_SCORE + scaledAdditional);
 
   console.log('📊 Score calculation:', {
-    totalScore,
-    maxPossibleScore,
-    baseCompatibility,
+    bonusPoints,
+    maxBonusPoints,
+    scaledAdditional,
     overallPercentage,
   });
 
-  // Calculate chemistry percentage using weighted scores
+  // Calculate chemistry percentage using same base + bonus approach
+  // Chemistry has slightly higher base (70%) and can reach 99%
+  const CHEMISTRY_BASE = 70;
+  const CHEMISTRY_MAX_ADDITIONAL = 29;
+
   let chemistryPercentage: number;
-  if (chemistryMaxScore > 0) {
-    const baseChemistry = Math.round((chemistryScore / chemistryMaxScore) * 100);
-    chemistryPercentage = Math.min(99, Math.max(75, baseChemistry));
+  if (chemistryMaxBonus > 0) {
+    const chemistryScaled = (chemistryBonus / chemistryMaxBonus) * CHEMISTRY_MAX_ADDITIONAL;
+    chemistryPercentage = Math.round(CHEMISTRY_BASE + chemistryScaled);
   } else {
-    // Fallback to overall percentage (deterministic, no randomness)
     chemistryPercentage = overallPercentage;
   }
 
-  // Calculate romance percentage using weighted scores
+  // Calculate romance percentage using same base + bonus approach
+  // Romance has slightly lower base (68%) for more variation
+  const ROMANCE_BASE = 68;
+  const ROMANCE_MAX_ADDITIONAL = 31;
+
   let romancePercentage: number;
-  if (romanceMaxScore > 0) {
-    const baseRomance = Math.round((romanceScore / romanceMaxScore) * 100);
-    romancePercentage = Math.min(99, Math.max(75, baseRomance));
+  if (romanceMaxBonus > 0) {
+    const romanceScaled = (romanceBonus / romanceMaxBonus) * ROMANCE_MAX_ADDITIONAL;
+    romancePercentage = Math.round(ROMANCE_BASE + romanceScaled);
   } else {
-    // Fallback to overall percentage (deterministic, no randomness)
     romancePercentage = overallPercentage;
   }
 
-  // Determine compatibility level
+  // Determine compatibility level (adjusted for 75-99% range)
   let compatibilityLevel: string;
-  if (overallPercentage >= 90) {
+  if (overallPercentage >= 93) {
     compatibilityLevel = 'Soulmates';
-  } else if (overallPercentage >= 80) {
+  } else if (overallPercentage >= 87) {
     compatibilityLevel = 'Highly Compatible';
-  } else if (overallPercentage >= 70) {
+  } else if (overallPercentage >= 81) {
     compatibilityLevel = 'Great Match';
   } else {
     compatibilityLevel = 'Compatible';
@@ -296,13 +316,27 @@ export function calculateCompatibility(
   ];
   const romanceDescription = romanceDescriptions[Math.floor(Math.random() * romanceDescriptions.length)];
 
+  // Extra safety: ensure all percentages are in valid range
+  // Overall: 75-99% (base + bonus system)
+  // Chemistry: 70-99% (slightly higher base)
+  // Romance: 68-99% (slightly lower base for more variation)
+  const safeOverall = Math.min(99, Math.max(75, overallPercentage));
+  const safeChemistry = Math.min(99, Math.max(70, chemistryPercentage));
+  const safeRomance = Math.min(99, Math.max(68, romancePercentage));
+
+  console.log('✅ Final compatibility percentages:', {
+    overall: safeOverall,
+    chemistry: safeChemistry,
+    romance: safeRomance
+  });
+
   return {
-    overallPercentage,
+    overallPercentage: safeOverall,
     compatibilityLevel,
     description,
-    chemistryPercentage,
+    chemistryPercentage: safeChemistry,
     chemistryDescription,
-    romancePercentage,
+    romancePercentage: safeRomance,
     romanceDescription,
   };
 }

@@ -185,10 +185,14 @@ html {
 
 // Utilities
 .gradient-love {
+  background: $pink; // Fallback for older browsers
+  background: -webkit-linear-gradient(180deg, $washed-pink 0%, $pink 100%); // Safari
   background: linear-gradient(180deg, $washed-pink 0%, $pink 100%);
 }
 
 .gradient-love-reverse {
+  background: $washed-pink; // Fallback
+  background: -webkit-linear-gradient(180deg, $pink 40%, $washed-pink 0%); // Safari
   background: linear-gradient(180deg, $pink 40%, $washed-pink 0%);
 }
 

@@ -105,7 +105,7 @@ export default function Results() {
 
   const handlePlayAgain = () => {
     reset();
-    navigate('/');
+    navigate(isCouplesLocal || isCouplesRemote ? '/couples' : '/');
   };
 
   // Show loading state (should be very brief since we already showed 3s loader)

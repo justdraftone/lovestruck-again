@@ -54,7 +54,14 @@ export const useQuizStore = create<QuizState>()(
       partnerId: null,
       partnerReady: false,
 
-      setMode: (mode) => set({ mode, currentQuestion: 0, answers: {} }),
+      setMode: (mode) => set({
+        mode,
+        currentQuestion: 0,
+        currentPartner: 1,
+        answers: {},
+        partner1Answers: {},
+        partner2Answers: {}
+      }),
 
       setQuestionSet: (questionSet) => set({ questionSet }),
 
