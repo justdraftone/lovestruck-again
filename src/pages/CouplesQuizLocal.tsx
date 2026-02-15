@@ -22,7 +22,6 @@ export default function CouplesQuizLocal() {
     setMode,
     questionSet,
     setQuestionSet,
-    selectedQuestionIds,
     setSelectedQuestions,
     setQuestionPairing
   } = useQuizStore();
