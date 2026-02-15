@@ -73,13 +73,13 @@ export default function CouplesQuizLocal() {
     setSelectedQuestions(allQuestionIds);
     setQuestionPairing(questionPairing);
 
-    console.log('📝 Question pairing setup:', {
-      pairCount: pairs.length,
-      totalQuestions: allQuestionIds.length,
-      pairingMapSize: Object.keys(questionPairing).length,
-      samplePairing: Object.entries(questionPairing).slice(0, 4),
-      testMode: 'SAME questions for both partners'
-    });
+    // console.log('📝 Question pairing setup:', {
+    //   pairCount: pairs.length,
+    //   totalQuestions: allQuestionIds.length,
+    //   pairingMapSize: Object.keys(questionPairing).length,
+    //   samplePairing: Object.entries(questionPairing).slice(0, 4),
+    //   testMode: 'SAME questions for both partners'
+    // });
 
     return pairs;
   }, [questionSet, setSelectedQuestions, setQuestionPairing]);

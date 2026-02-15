@@ -77,13 +77,13 @@ export default function CouplesQuizRemote() {
 
   // Debug logging
   useEffect(() => {
-    console.log('[CouplesRemote] State:', {
-      partnerNum,
-      currentTurn: room?.current_turn,
-      isMyTurn,
-      phase,
-      isHost
-    });
+    // console.log('[CouplesRemote] State:', {
+    //   partnerNum,
+    //   currentTurn: room?.current_turn,
+    //   isMyTurn,
+    //   phase,
+    //   isHost
+    // });
   }, [partnerNum, room?.current_turn, isMyTurn, phase, isHost]);
 
   // Select questions for remote quiz - both partners answer the same questions
@@ -97,7 +97,7 @@ export default function CouplesQuizRemote() {
       // Guest (joiner) gets randomized order, Host keeps original order
       if (!isHost) {
         const shuffledForGuest = [...baseQuestions].sort(() => Math.random() - 0.5);
-        console.log('📝 Guest question order randomized');
+        // console.log('📝 Guest question order randomized');
         return shuffledForGuest;
       }
 
@@ -123,12 +123,12 @@ export default function CouplesQuizRemote() {
     setSelectedQuestions(selectedQuestions.map(q => q.id));
     setQuestionPairing(questionPairing);
 
-    console.log('📝 Question setup (remote - host):', {
-      questionCount: selectedQuestions.length,
-      questionIds: selectedQuestions.map(q => q.id),
-      pairingMapSize: Object.keys(questionPairing).length,
-      testMode: 'Both partners answer SAME questions'
-    });
+    // console.log('📝 Question setup (remote - host):', {
+    //   questionCount: selectedQuestions.length,
+    //   questionIds: selectedQuestions.map(q => q.id),
+    //   pairingMapSize: Object.keys(questionPairing).length,
+    //   testMode: 'Both partners answer SAME questions'
+    // });
 
     return selectedQuestions;
   }, [questionSet, selectedQuestionIds, setSelectedQuestions, setQuestionPairing, isHost]);
@@ -190,19 +190,19 @@ export default function CouplesQuizRemote() {
   useEffect(() => {
     if (!room?.id) return;
 
-    console.log('[Realtime] Subscribing to room:', room.id);
+    // console.log('[Realtime] Subscribing to room:', room.id);
 
     const subscription = subscribeToRoom(room.id, (updatedRoom) => {
-      console.log('[Realtime] Room updated:', updatedRoom);
+      // console.log('[Realtime] Room updated:', updatedRoom);
       setRoom(updatedRoom);
 
       // Update partner name when they join (for host)
       if (updatedRoom.partner2_name) {
-        console.log('[Realtime] Partner joined:', updatedRoom.partner2_name);
+        // console.log('[Realtime] Partner joined:', updatedRoom.partner2_name);
         setPartnerName(updatedRoom.partner2_name);
         // Transition from waiting to playing when partner joins
         if (phaseRef.current === 'waiting') {
-          console.log('[Realtime] Transitioning to playing phase');
+          // console.log('[Realtime] Transitioning to playing phase');
           setPhase('playing');
         }
       }
@@ -230,7 +230,7 @@ export default function CouplesQuizRemote() {
 
     // Cleanup subscription on unmount
     return () => {
-      console.log('[Realtime] Cleaning up subscription');
+      // console.log('[Realtime] Cleaning up subscription');
       if (subscription) {
         unsubscribeFromRoom(subscription);
       }
