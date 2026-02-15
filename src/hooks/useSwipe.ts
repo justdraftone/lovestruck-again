@@ -31,8 +31,10 @@ export function useSwipe({ onSwipeLeft, onSwipeRight }: SwipeCallbacks) {
     const deltaY = Math.abs(touchEnd.current.y - touchStart.current.y);
 
     // Prevent browser swipe-back if horizontal swipe
-    if (deltaX > deltaY) {
+    // iOS Safari: Always prevent default for horizontal gestures
+    if (deltaX > deltaY && deltaX > 10) {
       e.preventDefault();
+      e.stopPropagation();
     }
   };
 

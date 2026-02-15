@@ -3,8 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/assets/icon.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
     <meta name="theme-color" content="#ff4d6d">
 
     <title>Love Struck Again — Find Your Dating Persona</title>
@@ -29,8 +31,8 @@
     <meta name="twitter:description" content="Swipe left or right on 7 dating scenarios and discover your dating persona. Play solo or take the couples quiz with your partner.">
     <meta name="twitter:image" content="https://mylovestruck.com/assets/Open-graph.png">
   </head>
-  <body style="background: linear-gradient(180deg, #EED6FC 0%, #FD5FE3 100%); min-height: 100vh;">
-    <div id="root"></div>
+  <body style="background: linear-gradient(180deg, #EED6FC 0%, #FD5FE3 100%); min-height: 100vh; position: relative; overflow-x: hidden;">
+    <div id="root" style="min-height: 100vh;"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

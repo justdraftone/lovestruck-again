@@ -1,3 +1,13 @@
+// CSS Custom Properties for iOS Safari viewport height fix
+:root {
+  --vh: 1vh;
+
+  @supports (-webkit-touch-callout: none) {
+    // iOS Safari specific
+    --vh: 1vh;
+  }
+}
+
 // Variables
 $pink: #FD5FE3;
 $washed-pink: #EED6FC;
@@ -52,14 +62,30 @@ $card-gradients: (
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  // iOS Safari fixes
+  -webkit-tap-highlight-color: transparent; // Remove tap highlight
+  -webkit-touch-callout: none; // Disable callout on long press
 }
 
 body {
   font-family: system-ui, -apple-system, sans-serif;
+  overscroll-behavior: none; // Prevent rubber band scrolling
   overscroll-behavior-x: none;
   -webkit-overflow-scrolling: touch;
   overflow-x: hidden;
   background: linear-gradient(180deg, $washed-pink 0%, $pink 100%);
+  // iOS Safari: Prevent text size adjustment
+  -webkit-text-size-adjust: 100%;
+  // iOS Safari: Better font rendering
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  // Safe area insets for notched devices
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  // Prevent pull-to-refresh
+  overscroll-behavior-y: contain;
 
   &::after {
     content: '';
@@ -78,6 +104,10 @@ body {
 html {
   overflow-x: hidden;
   width: 100%;
+  height: 100%;
+  // Prevent rubber band scrolling
+  position: fixed;
+  overflow: hidden;
 }
 
 // Page transitions
@@ -201,6 +231,9 @@ html {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  // iOS Safari: Better scrolling
+  -webkit-overflow-scrolling: touch;
+  position: relative;
 
   &--centered {
     align-items: center;
@@ -295,6 +328,12 @@ html {
               box-shadow 0.3s ease;
   display: flex;
   align-items: center;
+  // iOS Safari: Optimize transform performance
+  -webkit-transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0);
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 
   @media (min-width: 768px) {
     padding: 48px;
@@ -347,8 +386,10 @@ html {
 
   // Swipe animations - Higher specificity to override nth-child
   &.quiz-card--swipe-left {
+    -webkit-transform: translateX(-100%) rotate(-20deg) !important;
     transform: translateX(-100%) rotate(-20deg) !important;
     opacity: 0 !important;
+    -webkit-transition: transform 0.4s ease, opacity 0.2s ease !important;
     transition: transform 0.4s ease, opacity 0.2s ease !important;
     box-shadow:
       inset 40px 0 60px -20px rgba($red, 0.5),
@@ -356,8 +397,10 @@ html {
   }
 
   &.quiz-card--swipe-right {
+    -webkit-transform: translateX(100%) rotate(20deg) !important;
     transform: translateX(100%) rotate(20deg) !important;
     opacity: 0 !important;
+    -webkit-transition: transform 0.4s ease, opacity 0.2s ease !important;
     transition: transform 0.4s ease, opacity 0.2s ease !important;
     box-shadow:
       inset -40px 0 60px -20px rgba($green, 0.5),
@@ -526,6 +569,13 @@ html {
   cursor: pointer;
   transition: all 0.2s ease;
   font-size: 1rem;
+  // iOS Safari fixes
+  -webkit-appearance: none;
+  appearance: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation; // Prevents zoom on double tap
+  user-select: none;
+  -webkit-user-select: none;
 
   &:hover {
     transform: scale(1.025);
@@ -690,6 +740,16 @@ html {
   top: 60%;
   transform: translateY(-50%);
   z-index: 20;
+  // iOS Safari fixes
+  -webkit-appearance: none;
+  appearance: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  // Ensure transform works on iOS
+  -webkit-transform: translateY(-50%);
+  will-change: transform;
 
   @media (min-width: 768px) {
     width: 80px;
@@ -807,9 +867,13 @@ html {
   padding: 12px 16px;
   border: 2px solid $gray-200;
   border-radius: $radius-xl;
-  font-size: 1rem;
+  font-size: 16px; // iOS Safari: Prevent auto-zoom (must be 16px or larger)
   outline: none;
   transition: border-color 0.2s ease;
+  // iOS Safari fixes
+  -webkit-appearance: none;
+  appearance: none;
+  -webkit-tap-highlight-color: transparent;
 
   &:focus {
     border-color: $purple;
@@ -988,6 +1052,11 @@ html {
   padding-top: 240px;
   position: relative;
   max-height:55vh;
+  // iOS Safari fixes
+  touch-action: pan-y; // Allow vertical scroll but enable horizontal swipe
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
   &__solo{
     max-height:75vh
   }
@@ -1151,7 +1220,11 @@ html {
 }
 
 .flip-h {
+  -webkit-transform: scaleX(-1);
   transform: scaleX(-1);
+  // iOS Safari: Optimize transform
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .hearts {
