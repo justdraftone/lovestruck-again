@@ -18,6 +18,7 @@ import {
 import { detectQuestionSet } from './lib/geoDetect'
 import { useQuizStore } from './store/quizStore'
 import { useVisitTracking } from './hooks/useVisitTracking'
+import { initializeGA } from './lib/analytics'
 import Admin from './pages/Admin'
 import Privacy from './pages/Privacy'
 
@@ -27,6 +28,10 @@ function AppContent() {
   useVisitTracking()
 
   useEffect(() => {
+    // Initialize Google Analytics
+    initializeGA()
+
+    // Detect question set based on geo
     detectQuestionSet().then(setQuestionSet)
   }, [])
 
