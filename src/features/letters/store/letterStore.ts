@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { supabase } from '../../../lib/supabase';
 
 export interface ImageData {
   src: string;
@@ -25,9 +26,9 @@ interface LetterStore {
   currentLetter: Letter | null;
 
   // Actions
-  createLetter: (content: string, recipientName: string, senderName: string, image?: ImageData, stickers?: StickerData[]) => string;
+  createLetter: (content: string, recipientName: string, senderName: string, image?: ImageData, stickers?: StickerData[]) => Promise<string>;
   setRecipientName: (id: string, name: string) => void;
-  getLetter: (id: string) => Letter | null;
+  getLetter: (id: string) => Promise<Letter | null>;
   setCurrentLetter: (letter: Letter | null) => void;
   clearCurrentLetter: () => void;
 }
@@ -48,7 +49,7 @@ export const useLetterStore = create<LetterStore>()(
       letters: {},
       currentLetter: null,
 
-      createLetter: (content: string, recipientName: string, senderName: string, image?: ImageData, stickers?: StickerData[]) => {
+      createLetter: async (content: string, recipientName: string, senderName: string, image?: ImageData, stickers?: StickerData[]) => {
         const id = generateLetterId();
         const letter: Letter = {
           id,
@@ -59,6 +60,31 @@ export const useLetterStore = create<LetterStore>()(
           stickers,
           createdAt: Date.now(),
         };
+
+        // Save to Supabase for sharing across devices
+        try {
+          const { error } = await supabase.from('letters').insert({
+            id: letter.id,
+            recipient_name: letter.recipientName,
+            sender_name: letter.senderName,
+            content: letter.content,
+            image: letter.image || null,
+            stickers: letter.stickers || null,
+            created_at: new Date(letter.createdAt).toISOString(),
+          });
+
+          if (error) {
+            console.error('❌ Supabase insert error:', error);
+            alert(`Failed to save letter to cloud: ${error.message}`);
+          } else {
+            console.log('✅ Letter saved to Supabase successfully');
+          }
+        } catch (error) {
+          console.error('❌ Failed to save letter to Supabase:', error);
+          alert('Failed to save letter to cloud. It will only work on this device.');
+          // Continue anyway - letter will still be saved to localStorage
+        }
+
         set((state) => ({
           letters: { ...state.letters, [id]: letter },
           currentLetter: letter,
@@ -78,8 +104,52 @@ export const useLetterStore = create<LetterStore>()(
         });
       },
 
-      getLetter: (id: string) => {
-        return get().letters[id] || null;
+      getLetter: async (id: string) => {
+        // First check localStorage cache
+        const cachedLetter = get().letters[id];
+        if (cachedLetter) {
+          return cachedLetter;
+        }
+
+        // If not in cache, fetch from Supabase
+        try {
+          const { data, error } = await supabase
+            .from('letters')
+            .select('*')
+            .eq('id', id)
+            .maybeSingle();
+
+          if (error) {
+            console.error('Error fetching letter from Supabase:', error);
+            return null;
+          }
+
+          if (!data) {
+            // Letter not found - this is normal, not an error
+            return null;
+          }
+
+          // Convert Supabase data to Letter format
+          const letter: Letter = {
+            id: data.id,
+            recipientName: data.recipient_name,
+            senderName: data.sender_name,
+            content: data.content,
+            image: data.image || undefined,
+            stickers: data.stickers || undefined,
+            createdAt: new Date(data.created_at).getTime(),
+          };
+
+          // Cache it in localStorage for future access
+          set((state) => ({
+            letters: { ...state.letters, [id]: letter },
+          }));
+
+          return letter;
+        } catch (error) {
+          console.error('Error fetching letter from Supabase:', error);
+          return null;
+        }
       },
 
       setCurrentLetter: (letter: Letter | null) => {

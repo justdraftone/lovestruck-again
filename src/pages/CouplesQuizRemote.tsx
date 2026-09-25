@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { nigeriaQuestions, globalQuestions, Question } from '../data/questions';
+import { nigeriaQuestions, globalQuestions } from '../data/questions';
 import { useSwipe } from '../hooks/useSwipe';
 import { useQuizStore } from '../store/quizStore';
 import { trackEvent } from '../lib/analytics';
@@ -14,14 +14,10 @@ import {
 } from '../lib/roomService';
 import { Room } from '../lib/supabase';
 import { RealtimeChannel } from '@supabase/supabase-js';
-
 import { useSeo } from '../hooks/useSeo';
 import HomeLogo from '../components/HomeLogo';
-// Helper function to select random questions
-function selectRandomQuestions(questions: Question[], count: number): Question[] {
-  const shuffled = [...questions].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, count);
-}
+// TODO: Uncomment for production
+// import { selectQuestionPairs } from '../lib/questionPairing';
 
 type GamePhase = 'waiting' | 'playing' | 'waiting-partner';
 
@@ -39,7 +35,8 @@ export default function CouplesQuizRemote() {
     nextQuestion,
     questionSet,
     selectedQuestionIds,
-    setSelectedQuestions
+    setSelectedQuestions,
+    setQuestionPairing
   } = useQuizStore();
 
   const joinCode = searchParams.get('join');
@@ -68,7 +65,8 @@ export default function CouplesQuizRemote() {
     partnerNumRef.current = partnerNum;
   }, [partnerNum]);
 
-  const [playerName] = useState('Player');
+  const [playerName, setPlayerName] = useState('');
+  const [nameSet, setNameSet] = useState(false);
   const [partnerName, setPartnerName] = useState('');
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
   const [isSwiping, setIsSwiping] = useState<'left' | 'right' | null>(null);
@@ -86,37 +84,71 @@ export default function CouplesQuizRemote() {
 
   // Debug logging
   useEffect(() => {
-    console.log('[CouplesRemote] State:', {
-      partnerNum,
-      currentTurn: room?.current_turn,
-      isMyTurn,
-      phase,
-      isHost
-    });
+    // console.log('[CouplesRemote] State:', {
+    //   partnerNum,
+    //   currentTurn: room?.current_turn,
+    //   isMyTurn,
+    //   phase,
+    //   isHost
+    // });
   }, [partnerNum, room?.current_turn, isMyTurn, phase, isHost]);
 
-  // Select questions based on question set
+  // Select questions for remote quiz - both partners answer the same questions
   const questions = useMemo(() => {
     const sourceQuestions = questionSet === 'nigeria' ? nigeriaQuestions : globalQuestions;
 
-    // If we already have selected question IDs, use those
+    // If we already have selected questions, use those
     if (selectedQuestionIds.length > 0) {
-      return sourceQuestions.filter(q => selectedQuestionIds.includes(q.id));
+      const baseQuestions = sourceQuestions.filter(q => selectedQuestionIds.includes(q.id));
+
+      // Guest (joiner) gets randomized order, Host keeps original order
+      if (!isHost) {
+        const shuffledForGuest = [...baseQuestions].sort(() => Math.random() - 0.5);
+        // console.log('📝 Guest question order randomized');
+        return shuffledForGuest;
+      }
+
+      return baseQuestions;
     }
 
-    // Otherwise, select 28 random questions (14 for each partner)
-    const selected = selectRandomQuestions(sourceQuestions, 28);
-    setSelectedQuestions(selected.map(q => q.id));
-    return selected;
-  }, [questionSet, selectedQuestionIds, setSelectedQuestions]);
+    // TESTING: Use 8 questions (both partners answer the same 8)
+    // TODO: Change back to 14 for production
+    const QUESTION_COUNT = 8; // Change back to 14
+
+    // Host selects and sets up the questions
+    const shuffled = [...sourceQuestions].sort(() => Math.random() - 0.5);
+    const selected = shuffled.slice(0, QUESTION_COUNT);
+    const selectedQuestions = [...selected].sort(() => Math.random() - 0.5);
+
+    // Create pairing map (each question maps to itself - both partners answer the same question)
+    const questionPairing: Record<number, number> = {};
+    selectedQuestions.forEach(q => {
+      questionPairing[q.id] = q.id; // Maps to itself
+    });
+
+    // Store the question IDs and pairing for results calculation
+    setSelectedQuestions(selectedQuestions.map(q => q.id));
+    setQuestionPairing(questionPairing);
+
+    // console.log('📝 Question setup (remote - host):', {
+    //   questionCount: selectedQuestions.length,
+    //   questionIds: selectedQuestions.map(q => q.id),
+    //   pairingMapSize: Object.keys(questionPairing).length,
+    //   testMode: 'Both partners answer SAME questions'
+    // });
+
+    return selectedQuestions;
+  }, [questionSet, selectedQuestionIds, setSelectedQuestions, setQuestionPairing, isHost]);
 
   useEffect(() => {
     setMode('couples-remote');
     trackEvent('quiz_start', { metadata: { mode: 'couples-remote' } });
   }, [setMode]);
 
-  // Initialize room (create or join)
+  // Initialize room (create or join) - only after name is set
   useEffect(() => {
+    if (!nameSet || !playerName) return;
+
     const initRoom = async () => {
       if (isHost) {
         // Host creates a new room
@@ -126,11 +158,12 @@ export default function CouplesQuizRemote() {
           setPlayerId(result.playerId);
           setPartnerNum(1);
           setDisplayQuestion(result.room.current_question);
-          // Store room ID for potential reconnection
+          // Store room ID and partner number for results page
           localStorage.setItem('currentRoomId', result.room.id);
           localStorage.setItem('currentPlayerId', result.playerId);
+          localStorage.setItem('currentPartnerNum', '1');
         } else {
-          setError('Failed to create room. Please check your Supabase configuration.');
+          setError('We couldn\'t create a room for you. Please try again.');
         }
       } else if (joinCode) {
         // Joiner joins existing room
@@ -147,35 +180,36 @@ export default function CouplesQuizRemote() {
           } else {
             setPhase('waiting-partner');
           }
-          // Store room ID for potential reconnection
+          // Store room ID and partner number for results page
           localStorage.setItem('currentRoomId', result.room.id);
           localStorage.setItem('currentPlayerId', result.playerId);
+          localStorage.setItem('currentPartnerNum', result.partnerNum.toString());
         } else {
-          setError('Failed to join room. Please check the room code.');
+          setError('We couldn\'t find that room. Please check the code and try again.');
         }
       }
     };
 
     initRoom();
-  }, [isHost, joinCode, playerName]);
+  }, [isHost, joinCode, playerName, nameSet]);
 
   // Subscribe to room updates
   useEffect(() => {
     if (!room?.id) return;
 
-    console.log('[Realtime] Subscribing to room:', room.id);
+    // console.log('[Realtime] Subscribing to room:', room.id);
 
     const subscription = subscribeToRoom(room.id, (updatedRoom) => {
-      console.log('[Realtime] Room updated:', updatedRoom);
+      // console.log('[Realtime] Room updated:', updatedRoom);
       setRoom(updatedRoom);
 
       // Update partner name when they join (for host)
       if (updatedRoom.partner2_name) {
-        console.log('[Realtime] Partner joined:', updatedRoom.partner2_name);
+        // console.log('[Realtime] Partner joined:', updatedRoom.partner2_name);
         setPartnerName(updatedRoom.partner2_name);
         // Transition from waiting to playing when partner joins
         if (phaseRef.current === 'waiting') {
-          console.log('[Realtime] Transitioning to playing phase');
+          // console.log('[Realtime] Transitioning to playing phase');
           setPhase('playing');
         }
       }
@@ -203,7 +237,7 @@ export default function CouplesQuizRemote() {
 
     // Cleanup subscription on unmount
     return () => {
-      console.log('[Realtime] Cleaning up subscription');
+      // console.log('[Realtime] Cleaning up subscription');
       if (subscription) {
         unsubscribeFromRoom(subscription);
       }
@@ -307,6 +341,45 @@ export default function CouplesQuizRemote() {
   useSwipe({ onSwipeLeft: handleSwipeLeft, onSwipeRight: handleSwipeRight });
 
   const lobbyLink = roomCode ? `${window.location.origin}/couples/remote?join=${roomCode}` : '';
+
+  // Show name input form before creating/joining room
+  if (!nameSet) {
+    return (
+      <div className="page page--centered gradient-love">
+        <div className="header header__couples-quiz header__couples-solo-lobby">
+          <button onClick={() => navigate('/couples')} className="back-btn">
+            Back
+          </button>
+          <img src="/assets/illos/d1-x-loveorlies.svg" alt="" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} />
+        </div>
+
+        <div className="card mode-card mode-card__couples-names mode-card__couples-names-form">
+          <h2 className="title title--md">{isHost ? "Create Remote Quiz" : "Join Remote Quiz"}</h2>
+
+          <div className="form-group">
+            <label className="label">Your Name</label>
+            <input
+              type="text"
+              value={playerName}
+              onChange={(e) => setPlayerName(e.target.value)}
+              className="input form-group--input"
+              placeholder="Enter your name"
+              autoFocus
+            />
+          </div>
+
+          <button
+            onClick={() => playerName.trim() && setNameSet(true)}
+            className="btn btn--primary btn-homepage btn--couples-names"
+            disabled={!playerName.trim()}
+          >
+            {isHost ? "Create Room" : "Join Room"}
+          </button>
+        </div>
+        <div className='highlight-glow highlight-glow--results'></div>
+      </div>
+    );
+  }
 
   // Show error if room creation/joining failed
   if (error) {
@@ -499,7 +572,7 @@ export default function CouplesQuizRemote() {
                   index === 0 && swipeDirection === 'right' ? 'quiz-card--swipe-right' :
                   index === 0 && isSwiping === 'left' ? 'quiz-card--swiping-left' :
                   index === 0 && isSwiping === 'right' ? 'quiz-card--swiping-right' : ''
-                } ${index === 0 && !isMyTurn ? 'quiz-card--dimmed' : ''} ${partnerNum === 2 ? 'flip-h' : ''}`}
+                } ${index === 0 && !isMyTurn ? 'quiz-card--dimmed' : ''} ${!isHost ? 'flip-h' : ''}`}
               >
                 <div className="card-content">
                   {!hideCardContent && (
@@ -606,7 +679,7 @@ export default function CouplesQuizRemote() {
         </div>
       )}
 
-      {!isMyTurn && (
+      {!isMyTurn && !isCalculating && (
         <div className="waiting-screen">
           <div className="waiting-screen__backdrop" />
           <div className="waiting-screen__content">

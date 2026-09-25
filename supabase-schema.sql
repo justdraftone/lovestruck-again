@@ -101,3 +101,31 @@ CREATE POLICY "Anyone can insert visits"
 CREATE POLICY "Anyone can read visits"
   ON visits FOR SELECT
   USING (true);
+
+-- Create letters table for Valentine's letter feature
+CREATE TABLE IF NOT EXISTS letters (
+  id TEXT PRIMARY KEY,
+  recipient_name TEXT NOT NULL,
+  sender_name TEXT NOT NULL,
+  content TEXT NOT NULL,
+  image JSONB,
+  stickers JSONB,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create index for faster lookups by id
+CREATE INDEX IF NOT EXISTS letters_id_idx ON letters(id);
+CREATE INDEX IF NOT EXISTS letters_created_at_idx ON letters(created_at DESC);
+
+-- Enable Row Level Security (RLS)
+ALTER TABLE letters ENABLE ROW LEVEL SECURITY;
+
+-- Policy: Anyone can read letters (needed for sharing)
+CREATE POLICY "Anyone can read letters"
+  ON letters FOR SELECT
+  USING (true);
+
+-- Policy: Anyone can create letters
+CREATE POLICY "Anyone can create letters"
+  ON letters FOR INSERT
+  WITH CHECK (true);

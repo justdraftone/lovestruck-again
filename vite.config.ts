@@ -29,6 +29,9 @@ export default defineConfig({
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom', 'zustand'],
   },
+  // Restored: this block was dropped upstream, which silently dropped the test
+  // suite to vitest's default node environment. Every test touching the DOM or
+  // localStorage has been failing since.
   test: {
     environment: 'jsdom',
     globals: true,

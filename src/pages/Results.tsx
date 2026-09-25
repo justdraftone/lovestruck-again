@@ -30,6 +30,7 @@ export default function Results() {
     partner2Name,
     questionSet,
     selectedQuestionIds,
+    questionPairing,
     reset
   } = useQuizStore();
   const [showShareModal, setShowShareModal] = useState(false);
@@ -76,6 +77,7 @@ export default function Results() {
   }, [isLoading, isSolo, isCouplesLocal]);
 
   // Get remote data from Supabase room instead of sessionStorage
+  const currentPartnerNum = parseInt(localStorage.getItem('currentPartnerNum') || '1') as 1 | 2;
   const remoteName1 = remoteRoomData?.partner1_name || 'Partner 1';
   const remoteName2 = remoteRoomData?.partner2_name || 'Partner 2';
   const remoteAnswers1 = remoteRoomData?.partner1_answers || {};
@@ -106,12 +108,12 @@ export default function Results() {
     if (!isCouplesLocal && !isCouplesRemote) return null;
     const ans1 = isCouplesLocal ? partner1Answers : remoteAnswers1;
     const ans2 = isCouplesLocal ? partner2Answers : remoteAnswers2;
-    return calculateCompatibility(ans1, ans2, displayName1, displayName2, usedQuestions);
-  }, [isCouplesLocal, isCouplesRemote, partner1Answers, partner2Answers, remoteAnswers1, remoteAnswers2, displayName1, displayName2, usedQuestions]);
+    return calculateCompatibility(ans1, ans2, displayName1, displayName2, usedQuestions, questionPairing);
+  }, [isCouplesLocal, isCouplesRemote, partner1Answers, partner2Answers, remoteAnswers1, remoteAnswers2, displayName1, displayName2, usedQuestions, questionPairing]);
 
   const handlePlayAgain = () => {
     reset();
-    navigate('/');
+    navigate(isCouplesLocal || isCouplesRemote ? '/couples' : '/');
   };
 
   // Show loading state (should be very brief since we already showed 3s loader)
@@ -211,6 +213,7 @@ export default function Results() {
         partner2Result={partner2Result}
         compatibility={compatibility}
         onPlayAgain={handlePlayAgain}
+        currentPartnerNum={isCouplesRemote ? currentPartnerNum : undefined}
       />
     );
   }

@@ -1,18 +1,14 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuizStore } from '../store/quizStore';
-import { nigeriaQuestions, globalQuestions, Question } from '../data/questions';
+import { nigeriaQuestions, globalQuestions } from '../data/questions';
 import { useSwipe } from '../hooks/useSwipe';
 import { trackEvent } from '../lib/analytics';
 import Loader from '../components/Loader';
-
 import { useSeo } from '../hooks/useSeo';
 import HomeLogo from '../components/HomeLogo';
-// Helper function to select random questions
-function selectRandomQuestions(questions: Question[], count: number): Question[] {
-  const shuffled = [...questions].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, count);
-}
+// TODO: Uncomment for production
+// import { selectQuestionPairs } from '../lib/questionPairing';
 
 export default function CouplesQuizLocal() {
   useSeo({
@@ -33,8 +29,8 @@ export default function CouplesQuizLocal() {
     setMode,
     questionSet,
     setQuestionSet,
-    selectedQuestionIds,
-    setSelectedQuestions
+    setSelectedQuestions,
+    setQuestionPairing
   } = useQuizStore();
 
   const [namesSet, setNamesSet] = useState(false);
@@ -46,20 +42,62 @@ export default function CouplesQuizLocal() {
   const [isExplainerExiting, setIsExplainerExiting] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
 
-  // Select questions based on question set
-  const questions = useMemo(() => {
+  // Select question pairs for compatibility calculation
+  const questionPairs = useMemo(() => {
     const sourceQuestions = questionSet === 'nigeria' ? nigeriaQuestions : globalQuestions;
 
-    // If we already have selected question IDs, use those
-    if (selectedQuestionIds.length > 0) {
-      return sourceQuestions.filter(q => selectedQuestionIds.includes(q.id));
-    }
+    // TESTING: Use 8 pairs (16 questions total)
+    // TODO: Change back to 14 for production
+    const PAIR_COUNT = 8; // Change back to 14
 
-    // Otherwise, select 28 random questions (14 for each partner)
-    const selected = selectRandomQuestions(sourceQuestions, 28);
-    setSelectedQuestions(selected.map(q => q.id));
-    return selected;
-  }, [questionSet, selectedQuestionIds, setSelectedQuestions]);
+    // TESTING: Both partners answer SAME questions for easy testing
+    // TODO: Uncomment the line below for production (different questions same type)
+    // const { pairs, questionPairing } = selectQuestionPairs(sourceQuestions, PAIR_COUNT);
+
+    // Select random questions
+    const shuffled = [...sourceQuestions].sort(() => Math.random() - 0.5);
+    const selected = shuffled.slice(0, PAIR_COUNT);
+
+    // Create two different random orderings for each partner
+    const partner1Questions = [...selected].sort(() => Math.random() - 0.5);
+    const partner2Questions = [...selected].sort(() => Math.random() - 0.5);
+
+    // Create pairs by combining the shuffled orders
+    const pairs = partner1Questions.map((q1, index) => ({
+      partner1Question: q1,
+      partner2Question: partner2Questions[index], // Different order for partner 2
+      type: 'same'
+    }));
+
+    // Create pairing map (each question maps to itself for compatibility)
+    const questionPairing: Record<number, number> = {};
+    selected.forEach(q => {
+      questionPairing[q.id] = q.id; // Maps to itself
+    });
+
+    // Store the question IDs and pairing for results calculation
+    const allQuestionIds = pairs.flatMap(p => [p.partner1Question.id, p.partner2Question.id]);
+    setSelectedQuestions(allQuestionIds);
+    setQuestionPairing(questionPairing);
+
+    // console.log('📝 Question pairing setup:', {
+    //   pairCount: pairs.length,
+    //   totalQuestions: allQuestionIds.length,
+    //   pairingMapSize: Object.keys(questionPairing).length,
+    //   samplePairing: Object.entries(questionPairing).slice(0, 4),
+    //   testMode: 'SAME questions for both partners'
+    // });
+
+    return pairs;
+  }, [questionSet, setSelectedQuestions, setQuestionPairing]);
+
+  // Flatten pairs into a continuous stack of questions
+  const questions = useMemo(() => {
+    return questionPairs.flatMap(pair => [
+      pair.partner1Question,
+      pair.partner2Question
+    ]);
+  }, [questionPairs]);
 
   useEffect(() => {
     setMode('couples-local');
@@ -75,27 +113,27 @@ export default function CouplesQuizLocal() {
   };
 
   const processSwipe = (direction: 'left' | 'right') => {
-    if (swipeDirection) return;
+    if (swipeDirection || questions.length === 0) return;
 
-    // Add both classes immediately like the original
     setIsSwiping(direction);
     setSwipeDirection(direction);
 
-    // Wait for transition to complete (400ms transform + some buffer)
     setTimeout(() => {
-      addAnswer(currentQuestion, direction);
+      // Record answer for current question
+      addAnswer(questions[currentQuestion].id, direction);
       setIsSwiping(null);
 
       if (currentQuestion + 1 >= questions.length) {
-        // Show loader for 3 seconds before showing results
+        // Show loader before showing results
         setIsCalculating(true);
         setTimeout(() => {
           navigate('/results/couples-local');
         }, 3000);
       } else {
+        // Move to next card in the stack
         nextQuestion();
-        switchPartner();
-        setSwipeDirection(null);
+        switchPartner(); // Alternate partners
+        setTimeout(() => setSwipeDirection(null), 0);
       }
     }, 450);
   };
@@ -105,10 +143,27 @@ export default function CouplesQuizLocal() {
 
   useSwipe({ onSwipeLeft: handleSwipeLeft, onSwipeRight: handleSwipeRight });
 
+  const currentPartnerName = currentPartner === 1 ? partner1Name : partner2Name;
+  const progress = ((currentQuestion + 1) / questions.length) * 100;
+
+  // Pre-render upcoming cards for deck effect
+  const upcomingCards = useMemo(() => {
+    return [0, 1, 2].map(offset => {
+      const questionIndex = currentQuestion + offset;
+      if (questionIndex >= questions.length) return null;
+
+      return {
+        question: questions[questionIndex],
+        variant: (questionIndex % 4) + 1,
+        isTop: offset === 0
+      };
+    }).filter(Boolean);
+  }, [currentQuestion, questions]);
+
   if (!namesSet) {
     return (
       <div className="page page--centered gradient-love">
-      
+
       <div className="header header__couples-quiz header__couples-solo-lobby">
         <button onClick={() => navigate('/couples')} className="back-btn">
           Back
@@ -153,20 +208,6 @@ export default function CouplesQuizLocal() {
       </div>
     );
   }
-
-  const currentPartnerName = currentPartner === 1 ? partner1Name : partner2Name;
-  const progress = ((currentQuestion + 1) / questions.length) * 100;
-
-  // Pre-render upcoming cards for deck effect
-  const upcomingCards = [0, 1, 2].map(offset => {
-    const questionIndex = currentQuestion + offset;
-    if (questionIndex >= questions.length) return null;
-    return {
-      question: questions[questionIndex],
-      variant: (questionIndex % 4) + 1,
-      isTop: offset === 0
-    };
-  }).filter(Boolean);
 
   const dismissExplainer = () => {
     setIsExplainerExiting(true);

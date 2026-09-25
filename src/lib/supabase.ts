@@ -3,6 +3,11 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-anon-key';
 
+// Debug: Log if using placeholder credentials (remove after debugging)
+if (supabaseUrl === 'https://placeholder.supabase.co') {
+  console.warn('⚠️ Using placeholder Supabase URL! Environment variables not set.');
+}
+
 // Only create client if valid credentials are provided
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 

@@ -1,3 +1,4 @@
+import ReactGA from 'react-ga4'
 import { getUserId, getGeo } from './identity'
 
 type EventType =
@@ -15,19 +16,63 @@ interface TrackEventOptions {
   metadata?: Record<string, any>
 }
 
+// Initialize Google Analytics
+let isGAInitialized = false
+
+export function initializeGA() {
+  const measurementId = import.meta.env.VITE_GA_MEASUREMENT_ID
+
+  if (measurementId && measurementId !== 'G-XXXXXXXXXX' && !isGAInitialized) {
+    ReactGA.initialize(measurementId, {
+      gaOptions: {
+        send_page_view: false, // We'll send page views manually
+      },
+    })
+    isGAInitialized = true
+    console.debug('Google Analytics initialized')
+  }
+}
+
+// Track page view in Google Analytics
+export function trackPageView(path: string) {
+  if (isGAInitialized) {
+    ReactGA.send({ hitType: 'pageview', page: path })
+  }
+}
+
+// Track event in Google Analytics
+function trackGAEvent(eventName: string, params?: Record<string, any>) {
+  if (isGAInitialized) {
+    ReactGA.event(eventName, params)
+  }
+}
+
 export async function trackEvent(
   eventType: EventType,
   options: TrackEventOptions = {}
 ): Promise<void> {
   try {
-    // `./supabase` is imported dynamically on purpose. It constructs the
-    // Supabase client at module scope, and this module is reached from
+    const currentPath = options.path || window.location.pathname
+
+    // Track in Google Analytics
+    if (eventType === 'page_visit') {
+      trackPageView(currentPath)
+    } else {
+      trackGAEvent(eventType, {
+        ...options.metadata,
+        path: currentPath,
+      })
+    }
+
+    // Track in Supabase (existing functionality).
+    // `./supabase` is imported dynamically on purpose: it constructs the
+    // client at module scope, and this module is reached from
     // useVisitTracking on every page view — a static import would pull the
     // whole SDK (~163KB raw) into the entry chunk and run createClient during
     // boot for visitors who never touch a Supabase-backed feature.
     const [geo, { supabase }] = await Promise.all([getGeo(), import('./supabase')])
     await supabase.from('visits').insert({
-      path: options.path || window.location.pathname,
+      path: currentPath,
       event_type: eventType,
       metadata: options.metadata || {},
       referrer: document.referrer || null,

@@ -36,9 +36,9 @@ export default function ResultCard({
   const nameColor = visuals?.nameColor;
   const compatibleType = pairsWellWith || visuals?.pairsWellWith || "The Vibe Checker";
 
-  // Get the gradient for the compatible persona type
+  // Get the pairing gradient for the compatible persona type
   const compatibleVisuals = personaVisuals[compatibleType];
-  const compatibleGradient = compatibleVisuals?.gradient || personaVisuals["The Vibe Checker"].gradient;
+  const compatibleGradient = compatibleVisuals?.pairingGradient || personaVisuals["The Vibe Checker"].pairingGradient;
 
   const handlePairingClick = () => {
     if (onPairingClick) {

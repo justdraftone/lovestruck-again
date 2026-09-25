@@ -22,7 +22,13 @@ export async function createRoom(playerName: string): Promise<{ room: Room; play
     .single();
 
   if (error) {
-    console.error('Error creating room:', error);
+    console.error('Error creating room. Error details:', {
+      error: error,
+      message: error?.message,
+      details: error?.details,
+      hint: error?.hint,
+      code: error?.code
+    });
     return null;
   }
 
@@ -44,7 +50,13 @@ export async function joinRoom(
     .single();
 
   if (findError || !existingRoom) {
-    console.error('Room not found:', findError);
+    console.error('Room not found. Error details:', {
+      error: findError,
+      message: findError?.message,
+      details: findError?.details,
+      hint: findError?.hint,
+      code: findError?.code
+    });
     return null;
   }
 
@@ -68,7 +80,13 @@ export async function joinRoom(
     .single();
 
   if (error) {
-    console.error('Error joining room:', error);
+    console.error('Error joining room. Error details:', {
+      error: error,
+      message: error?.message,
+      details: error?.details,
+      hint: error?.hint,
+      code: error?.code
+    });
     return null;
   }
 
@@ -138,19 +156,24 @@ export async function submitAnswer(
   }
 
   const answersKey = partnerNum === 1 ? 'partner1_answers' : 'partner2_answers';
+  const otherAnswersKey = partnerNum === 1 ? 'partner2_answers' : 'partner1_answers';
   const currentAnswers = room[answersKey] || {};
+  const otherAnswers = room[otherAnswersKey] || {};
 
   // Update answers
   const newAnswers = { ...currentAnswers, [questionIndex]: answer };
 
-  // Determine next turn and question
+  // Determine next turn
   const nextTurn = partnerNum === 1 ? 2 : 1;
 
-  // Always increment question after someone answers
-  const nextQuestion = questionIndex + 1;
+  // Check if the other partner has already answered this question
+  const otherPartnerAnswered = otherAnswers[questionIndex] !== undefined;
 
-  // Game is finished when we've gone through all questions
-  const newStatus = nextQuestion >= totalQuestions ? 'finished' : room.status;
+  // Only increment question if BOTH partners have now answered it
+  const nextQuestion = otherPartnerAnswered ? questionIndex + 1 : questionIndex;
+
+  // Game is finished when we've gone through all questions AND both have answered
+  const newStatus = nextQuestion >= totalQuestions && otherPartnerAnswered ? 'finished' : room.status;
 
   const { error } = await supabase
     .from('rooms')

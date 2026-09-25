@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useLetterStore } from '../store/letterStore';
+import { useLetterStore, Letter } from '../store/letterStore';
 import { trackEvent } from '../../../lib/analytics';
 
 import { useSeo } from '../../../hooks/useSeo';
@@ -14,21 +14,24 @@ export default function SendLetter() {
   const navigate = useNavigate();
   const { letterId } = useParams<{ letterId: string }>();
   const { getLetter } = useLetterStore();
-  const [letter, setLetter] = useState<ReturnType<typeof getLetter>>(null);
+  const [letter, setLetter] = useState<Letter | null>(null);
   const letterLink = letterId ? `${window.location.origin}/letters/view/${letterId}` : '';
 
   useEffect(() => {
-    if (!letterId) {
-      navigate('/letters');
-      return;
-    }
-    const foundLetter = getLetter(letterId);
-    if (!foundLetter) {
-      navigate('/letters');
-    } else {
-      setLetter(foundLetter);
-      trackEvent('letter_send', { metadata: { letterId } });
-    }
+    const fetchLetter = async () => {
+      if (!letterId) {
+        navigate('/letters');
+        return;
+      }
+      const foundLetter = await getLetter(letterId);
+      if (!foundLetter) {
+        navigate('/letters');
+      } else {
+        setLetter(foundLetter);
+        trackEvent('letter_send', { metadata: { letterId } });
+      }
+    };
+    fetchLetter();
   }, [letterId, getLetter, navigate]);
 
   const handleCopyLink = () => {

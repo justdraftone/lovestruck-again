@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useLetterStore } from '../store/letterStore';
+import { useLetterStore, Letter } from '../store/letterStore';
 import Envelope from '../components/Envelope';
 
 import { useSeo } from '../../../hooks/useSeo';
@@ -15,20 +15,23 @@ export default function ViewLetter() {
   const { letterId } = useParams<{ letterId: string }>();
   const { getLetter, setCurrentLetter } = useLetterStore();
   const [showActions, setShowActions] = useState(false);
-  const [letter, setLetter] = useState<ReturnType<typeof getLetter>>(null);
+  const [letter, setLetter] = useState<Letter | null>(null);
 
   useEffect(() => {
-    if (!letterId) {
-      navigate('/letters');
-      return;
-    }
-    const foundLetter = getLetter(letterId);
-    if (!foundLetter) {
-      navigate('/letters/open');
-      return;
-    }
-    setLetter(foundLetter);
-    setCurrentLetter(foundLetter);
+    const fetchLetter = async () => {
+      if (!letterId) {
+        navigate('/letters');
+        return;
+      }
+      const foundLetter = await getLetter(letterId);
+      if (!foundLetter) {
+        navigate('/letters/open');
+        return;
+      }
+      setLetter(foundLetter);
+      setCurrentLetter(foundLetter);
+    };
+    fetchLetter();
   }, [letterId, getLetter, navigate, setCurrentLetter]);
 
   const handleAnimationComplete = () => {

@@ -4,7 +4,7 @@ import Home from './pages/Home'
 import { detectQuestionSet } from './lib/geoDetect'
 import { useQuizStore } from './store/quizStore'
 import { useVisitTracking } from './hooks/useVisitTracking'
-import { trackSourceWhenIdle } from './lib/ld'
+import { initializeGA } from './lib/analytics'
 
 // Home stays eager — it is the LCP route for essentially all traffic, and
 // lazy-loading it would add a round-trip to the thing we care most about.
@@ -35,10 +35,12 @@ function AppContent() {
   useVisitTracking()
 
   useEffect(() => {
+    // Initialize Google Analytics
+    initializeGA()
+
+    // Detect question set based on geo
     detectQuestionSet().then(setQuestionSet)
   }, [])
-
-  useEffect(() => trackSourceWhenIdle(), [])
 
   // Warm the two most likely next chunks once the homepage is idle, so the
   // route transition feels instant without costing anything at load time.
