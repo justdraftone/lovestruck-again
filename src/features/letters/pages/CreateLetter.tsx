@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLetterStore } from '../store/letterStore';
 import { trackEvent } from '../../../lib/analytics';
 
+import { useSeo } from '../../../hooks/useSeo';
 const STICKERS = [
   { src: '/assets/illos/heart-red.svg', label: 'Red heart' },
   { src: '/assets/illos/heart-gold.svg', label: 'Gold heart' },
@@ -51,6 +52,11 @@ function applyCornerResize(rs: ResizeState, mouseX: number, mouseY: number) {
 }
 
 export default function CreateLetter() {
+  useSeo({
+    title: 'Write Your Valentine\'s Card — Love Struck Again',
+    description: 'Add your message, a photo, and stickers, then get a private link to send. Your card stays on your device — we never see or store the content.',
+  });
+
   const navigate = useNavigate();
   const { createLetter } = useLetterStore();
   const [recipientName, setRecipientName] = useState('');
@@ -219,6 +225,7 @@ export default function CreateLetter() {
 
   return (
     <div className="page gradient-love">
+      <h1 className="visually-hidden">Write Your Valentine's Card</h1>
       <div className="letter-create">
         <div className="letter-create__header">
           <img src="/assets/illos/d1-x-loveorlies.svg" alt="draftone x love or lies" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} />

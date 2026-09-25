@@ -1,6 +1,12 @@
 import { useNavigate } from 'react-router-dom';
 
+import { useSeo } from '../../../hooks/useSeo';
 export default function LetterHome() {
+  useSeo({
+    title: 'Create a Valentine\'s Card — Love Struck Again',
+    description: 'Write a Valentine\'s card with your own photo and stickers, then share it with a private link or a 6-character code. No account, nothing stored online.',
+  });
+
   const navigate = useNavigate();
 
   return (

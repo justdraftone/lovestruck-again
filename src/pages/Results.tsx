@@ -11,7 +11,15 @@ import { supabase } from '../lib/supabase';
 import { PersonaName, personas } from '../data/personas';
 import { trackEvent } from '../lib/analytics';
 
+import { useSeo } from '../hooks/useSeo';
+import HomeLogo from '../components/HomeLogo';
 export default function Results() {
+  useSeo({
+    title: 'Your Dating Persona — Love Struck Again',
+    description: 'Your Love Struck Again quiz result and dating diagnosis.',
+    noindex: true,
+  });
+
   const navigate = useNavigate();
   const params = useParams<{ mode: string }>();
   const {
@@ -122,7 +130,7 @@ export default function Results() {
       <div className="page page--centered gradient-love" style={{ padding: '48px 24px' }}>
 
         <div className="header header__results">
-          <img src="/assets/illos/d1-x-loveorlies.svg" alt="" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} />
+          <HomeLogo onActivate={() => navigate('/')} />
         </div>
 
         <div className="container container--results">

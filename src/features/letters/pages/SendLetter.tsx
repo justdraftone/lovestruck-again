@@ -3,7 +3,14 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useLetterStore } from '../store/letterStore';
 import { trackEvent } from '../../../lib/analytics';
 
+import { useSeo } from '../../../hooks/useSeo';
 export default function SendLetter() {
+  useSeo({
+    title: 'Send Your Card — Love Struck Again',
+    description: 'Share the private link to the card you just made.',
+    noindex: true,
+  });
+
   const navigate = useNavigate();
   const { letterId } = useParams<{ letterId: string }>();
   const { getLetter } = useLetterStore();

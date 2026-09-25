@@ -3,7 +3,14 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useLetterStore } from '../store/letterStore';
 import Envelope from '../components/Envelope';
 
+import { useSeo } from '../../../hooks/useSeo';
 export default function ViewLetter() {
+  useSeo({
+    title: 'A Card For You — Love Struck Again',
+    description: 'Someone sent you a card.',
+    noindex: true,
+  });
+
   const navigate = useNavigate();
   const { letterId } = useParams<{ letterId: string }>();
   const { getLetter, setCurrentLetter } = useLetterStore();

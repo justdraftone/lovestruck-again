@@ -1,6 +1,12 @@
 import { useNavigate } from 'react-router-dom'
 
+import { useSeo } from '../hooks/useSeo';
 export default function Privacy() {
+  useSeo({
+    title: 'Privacy Policy — Love Struck Again',
+    description: 'How Love Struck Again handles your data: letters stay on your device, no accounts, no email required, and only anonymous analytics. Read the policy.',
+  });
+
   const navigate = useNavigate()
 
   return (

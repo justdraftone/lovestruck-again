@@ -1,4 +1,3 @@
-import { supabase } from './supabase'
 import { getUserId, getGeo } from './identity'
 
 type EventType =
@@ -21,7 +20,12 @@ export async function trackEvent(
   options: TrackEventOptions = {}
 ): Promise<void> {
   try {
-    const [geo] = await Promise.all([getGeo()])
+    // `./supabase` is imported dynamically on purpose. It constructs the
+    // Supabase client at module scope, and this module is reached from
+    // useVisitTracking on every page view — a static import would pull the
+    // whole SDK (~163KB raw) into the entry chunk and run createClient during
+    // boot for visitors who never touch a Supabase-backed feature.
+    const [geo, { supabase }] = await Promise.all([getGeo(), import('./supabase')])
     await supabase.from('visits').insert({
       path: options.path || window.location.pathname,
       event_type: eventType,

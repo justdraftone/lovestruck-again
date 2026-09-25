@@ -6,6 +6,8 @@ import { useSwipe } from '../hooks/useSwipe';
 import { trackEvent } from '../lib/analytics';
 import Loader from '../components/Loader';
 
+import { useSeo } from '../hooks/useSeo';
+import HomeLogo from '../components/HomeLogo';
 // Helper function to select random questions
 function selectRandomQuestions(questions: Question[], count: number): Question[] {
   const shuffled = [...questions].sort(() => Math.random() - 0.5);
@@ -13,6 +15,11 @@ function selectRandomQuestions(questions: Question[], count: number): Question[]
 }
 
 export default function CouplesQuizLocal() {
+  useSeo({
+    title: 'Couples Quiz on One Phone — Love Struck Again',
+    description: 'Pass one phone back and forth, answer the same 14 dating scenarios, and see both of your dating personas plus how compatible you really are.',
+  });
+
   const navigate = useNavigate();
   const {
     currentQuestion,
@@ -106,11 +113,11 @@ export default function CouplesQuizLocal() {
         <button onClick={() => navigate('/couples')} className="back-btn">
           Back
         </button>
-        <img src="/assets/illos/d1-x-loveorlies.svg" alt="" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} />
+        <HomeLogo onActivate={() => navigate('/')} />
       </div>
 
         <div className="card mode-card mode-card__couples-names mode-card__couples-names-form">
-          <h2 className="title title--md">Who's Playing?</h2>
+          <h1 className="title title--md">Who's Playing?</h1>
           {/* <p className="text-center mb-6" style={{ color: '#4b5563' }}>
             You'll take turns answering each question
           </p> */}
@@ -188,8 +195,9 @@ export default function CouplesQuizLocal() {
 
   return (
     <div className="page gradient-love">
+      <h1 className="visually-hidden">Couples Quiz on One Phone</h1>
       <div className="header header__couples-quiz-w-toggle" style={{ display: isCalculating ? 'none' : 'flex' }}>
-        <img src="/assets/illos/d1-x-loveorlies.svg" alt="" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} />
+        <HomeLogo onActivate={() => navigate('/')} />
         <div className="question-set-toggle">
           <button
             onClick={handleToggleQuestionSet}
@@ -304,7 +312,7 @@ export default function CouplesQuizLocal() {
                   </svg>
                 </button>
 
-                <img src="/assets/icons/swipe-right.svg" alt="swipe right" />
+                <img src="/assets/icons/swipe-right.svg" alt="" />
                 <p>Tap X if it's a dealbreaker for you</p>
               </div>
 
@@ -319,7 +327,7 @@ export default function CouplesQuizLocal() {
                   </svg>
                 </button>
 
-                <img src="/assets/icons/swipe-left.svg" alt="swipe left" />
+                <img src="/assets/icons/swipe-left.svg" alt="" />
                 <p>Tap green if you're cool with it</p>
               </div>
             </div>
