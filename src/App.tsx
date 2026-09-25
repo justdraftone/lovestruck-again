@@ -1,26 +1,33 @@
-import { useEffect } from 'react'
+import { useEffect, lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Home from './pages/Home'
-import SoloQuiz from './pages/SoloQuiz'
-import CouplesModeSelect from './pages/CouplesModeSelect'
-import CouplesQuizLocal from './pages/CouplesQuizLocal'
-import CouplesQuizRemote from './pages/CouplesQuizRemote'
-import Results from './pages/Results'
-import CardEditor from './pages/CardEditor'
-import NoiseOverlay from './components/NoiseOverlay'
-import {
-  LetterHome,
-  CreateLetter,
-  SendLetter,
-  OpenLetter,
-  ViewLetter
-} from './features/letters'
 import { detectQuestionSet } from './lib/geoDetect'
 import { useQuizStore } from './store/quizStore'
 import { useVisitTracking } from './hooks/useVisitTracking'
 import { initializeGA } from './lib/analytics'
-import Admin from './pages/Admin'
-import Privacy from './pages/Privacy'
+
+// Home stays eager — it is the LCP route for essentially all traffic, and
+// lazy-loading it would add a round-trip to the thing we care most about.
+//
+// The letters pages are imported by path rather than through
+// `./features/letters`, because that barrel also re-exports `useLetterStore`;
+// importing through it would drag the whole feature back into the entry chunk
+// and the split would silently no-op.
+const SoloQuiz = lazy(() => import('./pages/SoloQuiz'))
+const CouplesModeSelect = lazy(() => import('./pages/CouplesModeSelect'))
+const CouplesQuizLocal = lazy(() => import('./pages/CouplesQuizLocal'))
+const CouplesQuizRemote = lazy(() => import('./pages/CouplesQuizRemote'))
+const Results = lazy(() => import('./pages/Results'))
+const CardEditor = lazy(() => import('./pages/CardEditor'))
+const Admin = lazy(() => import('./pages/Admin'))
+const Privacy = lazy(() => import('./pages/Privacy'))
+const NotFound = lazy(() => import('./pages/NotFound'))
+
+const LetterHome = lazy(() => import('./features/letters/pages/LetterHome'))
+const CreateLetter = lazy(() => import('./features/letters/pages/CreateLetter'))
+const SendLetter = lazy(() => import('./features/letters/pages/SendLetter'))
+const OpenLetter = lazy(() => import('./features/letters/pages/OpenLetter'))
+const ViewLetter = lazy(() => import('./features/letters/pages/ViewLetter'))
 
 function AppContent() {
   const setQuestionSet = useQuizStore((s) => s.setQuestionSet)
@@ -35,9 +42,26 @@ function AppContent() {
     detectQuestionSet().then(setQuestionSet)
   }, [])
 
+  // Warm the two most likely next chunks once the homepage is idle, so the
+  // route transition feels instant without costing anything at load time.
+  useEffect(() => {
+    const warm = () => {
+      import('./pages/SoloQuiz')
+      import('./pages/CouplesModeSelect')
+    }
+    const idle = typeof requestIdleCallback === 'function'
+    const id = idle ? requestIdleCallback(warm, { timeout: 3000 }) : window.setTimeout(warm, 2000)
+    return () => {
+      if (idle && typeof cancelIdleCallback === 'function') cancelIdleCallback(id as number)
+      else clearTimeout(id as number)
+    }
+  }, [])
+
   return (
-    <>
-      <NoiseOverlay />
+    // `fallback` is a bare gradient page, not a spinner: chunk fetches are
+    // 20-50ms on a warm connection and a flashed spinner reads worse than
+    // nothing, but an empty fallback would flash the body background.
+    <Suspense fallback={<div className="page gradient-love" />}>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/solo" element={<SoloQuiz />} />
@@ -55,8 +79,10 @@ function AppContent() {
         <Route path="/letters/send/:letterId" element={<SendLetter />} />
         <Route path="/letters/open" element={<OpenLetter />} />
         <Route path="/letters/view/:letterId" element={<ViewLetter />} />
+
+        <Route path="*" element={<NotFound />} />
       </Routes>
-    </>
+    </Suspense>
   )
 }
 

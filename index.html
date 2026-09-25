@@ -2,14 +2,24 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+    <title>Love Struck Again — Find Your Dating Persona</title>
+    <meta name="description" content="Swipe through 14 dating scenarios and get your official dating diagnosis. Find out which dating persona you are. Free, no signup, takes 2 minutes.">
+    <link rel="canonical" href="https://mylovestruck.com/">
+
+    <!-- Icons & PWA -->
     <link rel="icon" type="image/png" href="/assets/icon.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <link rel="apple-touch-icon" href="/assets/icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#ff4d6d">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Love Struck">
     <meta name="format-detection" content="telephone=no">
-    <meta name="theme-color" content="#ff4d6d">
 
-    <!-- Google Analytics -->
+    <!-- Google Analytics (GA4) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=%VITE_GA_MEASUREMENT_ID%"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
@@ -18,18 +28,25 @@
       gtag('config', '%VITE_GA_MEASUREMENT_ID%');
     </script>
 
-    <title>Love Struck Again — Find Your Dating Persona</title>
-    <meta name="description" content="Swipe left or right on 7 dating scenarios and discover your dating persona. Play solo or take the couples quiz with your partner to see how compatible you really are.">
-    <link rel="canonical" href="https://mylovestruck.com/">
+    <!-- Third-party origins hit during first paint -->
+    <link rel="preconnect" href="https://www.googletagmanager.com">
+    <link rel="preconnect" href="https://app.launchdarkly.com" crossorigin>
+    <link rel="preconnect" href="https://ipapi.co" crossorigin>
+    <link rel="preconnect" href="https://rtirmkzaagayrwylzjnb.supabase.co" crossorigin>
+
+    <!-- Homepage LCP image -->
+    <link rel="preload" as="image" href="/assets/illos/love-struck-again-title.webp" fetchpriority="high">
 
     <!-- Open Graph -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://mylovestruck.com/">
     <meta property="og:title" content="Love Struck Again — Find Your Dating Persona">
-    <meta property="og:description" content="Swipe left or right on 7 dating scenarios and discover your dating persona. Play solo or take the couples quiz with your partner to see how compatible you really are.">
+    <meta property="og:description" content="Swipe through 14 dating scenarios and discover your dating persona. Play solo or take the couples quiz with your partner to see how compatible you really are.">
     <meta property="og:image" content="https://mylovestruck.com/assets/Open-graph.png">
+    <meta property="og:image:type" content="image/png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Love Struck Again — a swipe-based dating persona quiz">
     <meta property="og:site_name" content="Love Struck Again">
     <meta property="og:locale" content="en_US">
 
@@ -37,11 +54,69 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:url" content="https://mylovestruck.com/">
     <meta name="twitter:title" content="Love Struck Again — Find Your Dating Persona">
-    <meta name="twitter:description" content="Swipe left or right on 7 dating scenarios and discover your dating persona. Play solo or take the couples quiz with your partner.">
+    <meta name="twitter:description" content="Swipe through 14 dating scenarios and discover your dating persona. Play solo or take the couples quiz with your partner.">
     <meta name="twitter:image" content="https://mylovestruck.com/assets/Open-graph.png">
+    <meta name="twitter:image:alt" content="Love Struck Again — a swipe-based dating persona quiz">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://mylovestruck.com/#website",
+          "url": "https://mylovestruck.com/",
+          "name": "Love Struck Again",
+          "description": "A swipe-based quiz that diagnoses your dating persona, solo or with a partner.",
+          "inLanguage": "en-US",
+          "publisher": { "@id": "https://mylovestruck.com/#organization" }
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://mylovestruck.com/#organization",
+          "name": "DraftOne",
+          "url": "https://justdraftone.xyz/",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://mylovestruck.com/assets/icon.png"
+          }
+        },
+        {
+          "@type": "WebApplication",
+          "@id": "https://mylovestruck.com/#webapp",
+          "name": "Love Struck Again",
+          "url": "https://mylovestruck.com/",
+          "applicationCategory": "GameApplication",
+          "operatingSystem": "Any",
+          "browserRequirements": "Requires JavaScript.",
+          "inLanguage": "en-US",
+          "isAccessibleForFree": true,
+          "image": "https://mylovestruck.com/assets/Open-graph.png",
+          "description": "Swipe through 14 dating scenarios and get your dating persona, plus a compatibility score when you play with a partner.",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          },
+          "publisher": { "@id": "https://mylovestruck.com/#organization" }
+        }
+      ]
+    }
+    </script>
   </head>
-  <body style="background: linear-gradient(180deg, #EED6FC 0%, #FD5FE3 100%); min-height: 100vh; position: relative; overflow-x: hidden;">
-    <div id="root" style="min-height: 100vh;"></div>
+  <body style="background: linear-gradient(180deg, #EED6FC 0%, #FD5FE3 100%); min-height: 100vh; min-height: 100dvh; position: relative; overflow-x: hidden;">
+    <div id="root" style="min-height: 100vh; min-height: 100dvh;"></div>
+    <noscript>
+      <h1>Love Struck Again</h1>
+      <p>Are you the problem, or is everyone just unserious? Swipe through 14 dating
+         scenarios and get your official dating diagnosis.</p>
+      <ul>
+        <li><a href="/solo">Play the solo dating persona quiz</a></li>
+        <li><a href="/couples">Play the couples compatibility quiz</a></li>
+        <li><a href="/privacy">Privacy policy</a></li>
+      </ul>
+      <p>This quiz requires JavaScript to play.</p>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

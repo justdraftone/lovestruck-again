@@ -3,7 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { useLetterStore } from '../store/letterStore';
 import { trackEvent } from '../../../lib/analytics';
 
+import { useSeo } from '../../../hooks/useSeo';
 export default function OpenLetter() {
+  useSeo({
+    title: 'Open a Valentine\'s Card — Love Struck Again',
+    description: 'Got a card? Paste the link or enter the 6-character letter code to open the Valentine\'s card someone sent you.',
+  });
+
   const navigate = useNavigate();
   const { getLetter } = useLetterStore();
   const [letterIdOrLink, setLetterIdOrLink] = useState('');
@@ -38,6 +44,7 @@ export default function OpenLetter() {
 
   return (
     <div className="page page--centered gradient-love">
+      <h1 className="visually-hidden">Open a Valentine's Card</h1>
       <div className="letter-open">
         <div className="letter-send__header" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
           <img src="/assets/illos/d1-x-loveorlies.svg" alt="draftone x love or lies" />

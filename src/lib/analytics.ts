@@ -1,5 +1,4 @@
 import ReactGA from 'react-ga4'
-import { supabase } from './supabase'
 import { getUserId, getGeo } from './identity'
 
 type EventType =
@@ -65,8 +64,13 @@ export async function trackEvent(
       })
     }
 
-    // Track in Supabase (existing functionality)
-    const [geo] = await Promise.all([getGeo()])
+    // Track in Supabase (existing functionality).
+    // `./supabase` is imported dynamically on purpose: it constructs the
+    // client at module scope, and this module is reached from
+    // useVisitTracking on every page view — a static import would pull the
+    // whole SDK (~163KB raw) into the entry chunk and run createClient during
+    // boot for visitors who never touch a Supabase-backed feature.
+    const [geo, { supabase }] = await Promise.all([getGeo(), import('./supabase')])
     await supabase.from('visits').insert({
       path: currentPath,
       event_type: eventType,

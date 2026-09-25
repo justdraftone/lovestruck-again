@@ -1,3 +1,35 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/assets/(.*).(js|css)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/assets/(.*).(png|jpg|jpeg|webp|svg|otf|woff|woff2|ico)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=2592000, stale-while-revalidate=86400" }
+      ]
+    },
+    {
+      "source": "/((?!assets/).*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
+        { "key": "Permissions-Policy", "value": "geolocation=(), microphone=(), camera=()" },
+        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains" }
+      ]
+    },
+    { "source": "/admin", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" }] },
+    { "source": "/card-editor", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" }] },
+    { "source": "/results/:path*", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }] },
+    { "source": "/letters/send/:path*", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" }] },
+    { "source": "/letters/view/:path*", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" }] }
+  ]
 }

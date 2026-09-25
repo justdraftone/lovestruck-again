@@ -6,6 +6,8 @@ import { useSwipe } from '../hooks/useSwipe';
 import { trackEvent } from '../lib/analytics';
 import Loader from '../components/Loader';
 
+import { useSeo } from '../hooks/useSeo';
+import HomeLogo from '../components/HomeLogo';
 // Helper function to select random questions
 function selectRandomQuestions(questions: Question[], count: number): Question[] {
   const shuffled = [...questions].sort(() => Math.random() - 0.5);
@@ -13,6 +15,11 @@ function selectRandomQuestions(questions: Question[], count: number): Question[]
 }
 
 export default function SoloQuiz() {
+  useSeo({
+    title: 'Solo Dating Persona Quiz — Love Struck Again',
+    description: 'Swipe left or right on 14 dating scenarios and get your dating persona, your official diagnosis, and the persona you pair best with. No signup needed.',
+  });
+
   const navigate = useNavigate();
   const {
     currentQuestion,
@@ -110,8 +117,9 @@ export default function SoloQuiz() {
 
   return (
     <div className="page gradient-love">
+      <h1 className="visually-hidden">Solo Dating Persona Quiz</h1>
       <div className="header header__quiz" style={{ display: isCalculating ? 'none' : 'flex' }}>
-        <img src="/assets/illos/d1-x-loveorlies.svg" alt="" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} />
+        <HomeLogo onActivate={() => navigate('/')} />
         <div className="question-set-toggle">
           <button
             onClick={handleToggleQuestionSet}
@@ -205,7 +213,7 @@ export default function SoloQuiz() {
                 </svg>
               </button>
 
-              <img src="/assets/icons/swipe-right.svg" alt="swipe right" />
+              <img src="/assets/icons/swipe-right.svg" alt="" />
               <p>Tap X if it's a dealbreaker for you</p>
             </div>
 
@@ -220,7 +228,7 @@ export default function SoloQuiz() {
                 </svg>
               </button>
 
-              <img src="/assets/icons/swipe-left.svg" alt="swipe left" />
+              <img src="/assets/icons/swipe-left.svg" alt="" />
               <p>Tap green if you're cool with it</p>
             </div>
 

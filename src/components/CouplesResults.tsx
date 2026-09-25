@@ -7,6 +7,7 @@ import { getPersonaCardVars, couplesCardVars } from '../data/cardSettings';
 import { PersonaName } from '../data/personas';
 import { trackEvent } from '../lib/analytics';
 
+import HomeLogo from './HomeLogo';
 interface CouplesResultsProps {
   partner1Name: string;
   partner2Name: string;
@@ -193,7 +194,7 @@ export default function CouplesResults({
   return (
     <div className="page page--centered gradient-love" style={{ padding: '32px 24px' }}>
       <div className="header header__quiz header__quiz-couples-results">
-        <img src="/assets/illos/d1-x-loveorlies.svg" alt="" onClick={onPlayAgain} style={{ cursor: 'pointer' }} />
+        <HomeLogo onActivate={onPlayAgain} />
       </div>
       
       <div className="couples-results">

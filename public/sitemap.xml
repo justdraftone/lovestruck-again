@@ -2,22 +2,30 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://mylovestruck.com/</loc>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
+    <lastmod>2026-09-25</lastmod>
   </url>
   <url>
     <loc>https://mylovestruck.com/solo</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
+    <lastmod>2026-09-25</lastmod>
   </url>
   <url>
     <loc>https://mylovestruck.com/couples</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <lastmod>2026-09-25</lastmod>
+  </url>
+  <url>
+    <loc>https://mylovestruck.com/couples/together</loc>
+    <lastmod>2026-09-25</lastmod>
+  </url>
+  <url>
+    <loc>https://mylovestruck.com/couples/remote</loc>
+    <lastmod>2026-09-25</lastmod>
   </url>
   <url>
     <loc>https://mylovestruck.com/letters</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
+    <lastmod>2026-02-11</lastmod>
+  </url>
+  <url>
+    <loc>https://mylovestruck.com/privacy</loc>
+    <lastmod>2026-02-11</lastmod>
   </url>
 </urlset>

@@ -14,12 +14,19 @@ import {
 } from '../lib/roomService';
 import { Room } from '../lib/supabase';
 import { RealtimeChannel } from '@supabase/supabase-js';
+import { useSeo } from '../hooks/useSeo';
+import HomeLogo from '../components/HomeLogo';
 // TODO: Uncomment for production
 // import { selectQuestionPairs } from '../lib/questionPairing';
 
 type GamePhase = 'waiting' | 'playing' | 'waiting-partner';
 
 export default function CouplesQuizRemote() {
+  useSeo({
+    title: 'Play the Couples Quiz Remotely — Love Struck',
+    description: 'Share a link with your partner and answer the same 14 dating scenarios from your own phones. See both personas and your compatibility score.',
+  });
+
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const {
@@ -382,12 +389,12 @@ export default function CouplesQuizRemote() {
           <button className="back-btn" onClick={() => navigate('/couples')}>
             Back
           </button>
-          <img src="/assets/illos/d1-x-loveorlies.svg" alt="" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} />
+          <HomeLogo onActivate={() => navigate('/')} />
         </div>
 
         <div className="remote-invite">
           <div className="remote-invite__card">
-            <h2 className="remote-invite__title">Error</h2>
+            <h1 className="remote-invite__title">Error</h1>
             <p className="remote-invite__subtitle" style={{ color: '#ff4444' }}>{error}</p>
             <button
               onClick={() => navigate('/couples')}
@@ -407,6 +414,7 @@ export default function CouplesQuizRemote() {
   if (!room || (!isHost && partnerNum === 1)) {
     return (
       <div className="page page--centered gradient-love">
+        <h1 className="visually-hidden">Play the Couples Quiz Remotely</h1>
         <div className="results-loader">
           <div className="results-loader__spinner"></div>
           <p className="results-loader__text">
@@ -425,18 +433,18 @@ export default function CouplesQuizRemote() {
           <button onClick={() => navigate('/')} className="back-btn">
             Back
           </button>
-          <img src="/assets/illos/d1-x-loveorlies.svg" alt="" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} />
+          <HomeLogo onActivate={() => navigate('/')} />
         </div>
         {/* <div className="header header">
           <button className="back-btn" onClick={() => navigate('/couples')}>
             Back
           </button>
-          <img src="/assets/illos/d1-x-loveorlies.svg" alt="" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} />
+          <HomeLogo onActivate={() => navigate('/')} />
         </div> */}
 
         <div className="remote-invite">
           <div className="remote-invite__card">
-            <h2 className="remote-invite__title">Invite your Partner</h2>
+            <h1 className="remote-invite__title">Invite your Partner</h1>
             <p className="remote-invite__subtitle">Share this link with your partner</p>
 
             <div className="remote-invite__link-section">
@@ -521,6 +529,7 @@ export default function CouplesQuizRemote() {
 
   return (
     <div className="page gradient-love">
+      <h1 className="visually-hidden">Play the Couples Quiz Remotely</h1>
       <div
         className="header header__couples-quiz-w-toggle"
         style={{
@@ -530,7 +539,7 @@ export default function CouplesQuizRemote() {
           display: isCalculating ? 'none' : 'flex'
         }}
       >
-        <img src="/assets/illos/d1-x-loveorlies.svg" alt="" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} />
+        <HomeLogo onActivate={() => navigate('/')} />
         {isMyTurn && (
           <div className="turn-indicator turn-indicator--active">
             <p>Your turn!</p>
@@ -648,7 +657,7 @@ export default function CouplesQuizRemote() {
                 </svg>
               </button>
 
-              <img src="/assets/icons/swipe-right.svg" alt="swipe right" />
+              <img src="/assets/icons/swipe-right.svg" alt="" />
               <p>Tap X if it's a dealbreaker for you</p>
             </div>
 
@@ -663,7 +672,7 @@ export default function CouplesQuizRemote() {
                 </svg>
               </button>
 
-              <img src="/assets/icons/swipe-left.svg" alt="swipe left" />
+              <img src="/assets/icons/swipe-left.svg" alt="" />
               <p>Tap green if you're cool with it</p>
             </div>
           </div>

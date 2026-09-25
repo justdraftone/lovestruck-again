@@ -4,6 +4,7 @@ import ResultCard from '../components/ResultCard';
 import CompatibilityCard from '../components/CompatibilityCard';
 import { PersonaName } from '../data/personas';
 
+import { useSeo } from '../hooks/useSeo';
 type CardType = 'single' | 'couples';
 type Viewport = 'mobile' | 'desktop';
 
@@ -90,6 +91,12 @@ const PERSONA_NAMES: PersonaName[] = [
 ];
 
 export default function CardEditor() {
+  useSeo({
+    title: 'Card Design Editor — Love Struck Again',
+    description: 'Internal card design tool.',
+    noindex: true,
+  });
+
   const navigate = useNavigate();
   const [cardType, setCardType] = useState<CardType>('single');
   const [viewport, setViewport] = useState<Viewport>('desktop');

@@ -35,18 +35,27 @@ $shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 $shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 
 //fonts
+// Family names are misspelled ("Rosindale") but are spelled the same way at
+// every use site, so they resolve correctly. Left as-is deliberately — renaming
+// means touching ~20 call sites for no user-visible gain.
 @font-face {
   font-family: "Rosindale Italic Bold";
-  src:url("/assets/Roslindale-DeckNarrowMediumItalic-Testing.otf");
+  src:url("/assets/Roslindale-DeckNarrowMediumItalic-Testing.woff2") format("woff2"),
+      url("/assets/Roslindale-DeckNarrowMediumItalic-Testing.otf") format("opentype");
+  font-display: swap;
 }
 @font-face {
   font-family: "Rosindale Italic";
-  src:url("/assets/Roslindale-TextItalic-Testing.otf");
+  src:url("/assets/Roslindale-TextItalic-Testing.woff2") format("woff2"),
+      url("/assets/Roslindale-TextItalic-Testing.otf") format("opentype");
+  font-display: swap;
 }
 @font-face {
   font-family: "Roslindale";
-  src:url("/assets/Roslindale-DeckNarrowMediumItalic-Testing.otf");
+  src:url("/assets/Roslindale-DeckNarrowMediumItalic-Testing.woff2") format("woff2"),
+      url("/assets/Roslindale-DeckNarrowMediumItalic-Testing.otf") format("opentype");
   font-style: normal;
+  font-display: swap;
 }
 
 // Question card gradient variants
@@ -269,7 +278,12 @@ html:has(.page--main-homepage) {
 
 // Layout
 .page {
+  // `vh` on mobile Safari means the LARGE viewport (URL bar hidden), so a
+  // 100vh page is taller than what the user can actually see and produces
+  // dead scroll below the content. `dvh` tracks the visible area. The `vh`
+  // line stays first as a fallback for browsers without dvh.
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   // iOS Safari: Better scrolling
@@ -283,7 +297,20 @@ html:has(.page--main-homepage) {
     padding-top: 120px; // Add space for fixed header and back button
   }
   &--main-homepage {
+    // `overflow-x: hidden` alone is a trap: per spec the other axis's
+    // `visible` then computes to `auto`, so this element quietly becomes its
+    // own vertical scroll container. The decorative glow (`.content::after`)
+    // hangs ~800px below the content, which showed up as a screenful of empty
+    // scroll under the footer — invisible to `document.scrollHeight`, because
+    // the scrolling happened *inside* this element.
+    //
+    // `overflow: clip` clips the same way but creates no scroll container at
+    // all, so decorative overflow can never generate scroll. Real content is
+    // unaffected: `.page` sizes with `min-height`, so its box always grows to
+    // contain its in-flow children. `overflow-x: hidden` stays first as the
+    // fallback for browsers without `clip` (Safari < 16).
     overflow-x: hidden;
+    overflow: clip;
     position: relative;
 
     @media (max-width: 768px) {
@@ -324,7 +351,8 @@ html:has(.page--main-homepage) {
 
   &--couples-mode-select{
     max-width: 640px;
-    height:100vh;
+    height: 100vh;
+    height: 100dvh;
     display:flex;
     flex-direction: column;
   }
@@ -2581,31 +2609,6 @@ html:has(.page--main-homepage) {
 }
 
 // Noise Overlay - CSS-based for performance
-.noise-overlay {
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 9999;
-  opacity: 0.5;
-  mix-blend-mode: multiply;
-
-  // SVG-based noise pattern (performant, GPU-accelerated)
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='5' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.5'/%3E%3C/svg%3E");
-  background-repeat: repeat;
-  background-size: 150px 150px;
-
-  // Subtle animation for grain movement
-  animation: noiseShift 0.5s steps(2) infinite;
-}
-
-@keyframes noiseShift {
-  0% { transform: translate(0, 0); }
-  50% { transform: translate(-16px, -16px); }
-  100% { transform: translate(0, 0); }
-}
-
 // Couples page alignment fixes
 .mode-card__couples-names {
   width: 100%;
@@ -2916,6 +2919,7 @@ html:has(.page--main-homepage) {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-height: 100dvh;
   padding: 24px;
   z-index:9;
 
@@ -4222,18 +4226,6 @@ html:has(.page--main-homepage) {
 // ============================================
 // CANVAS NOISE OVERLAY
 // ============================================
-.noise-overlay-canvas {
-  display: none; // Grain disabled
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 9999;
-  opacity: 0;
-  mix-blend-mode: overlay;
-}
-
 // ============================================
 // HOMEPAGE HEART & CLOUD ANIMATIONS
 // ============================================
@@ -4333,15 +4325,16 @@ html:has(.page--main-homepage) {
 
 // Logo 3D appearance from back - subtle and smooth
 @keyframes logoAppear3D {
+  // `filter: blur()` removed from both stops: it forced a full re-rasterization
+  // of the wordmark (the homepage LCP element) on every frame for 1.5s, during
+  // exactly the window that decides LCP. scale() alone reads the same.
   0% {
     opacity: 0;
     transform: translateZ(-200px) scale(0.8);
-    filter: blur(4px);
   }
   100% {
     opacity: 1;
     transform: translateZ(0) scale(1);
-    filter: blur(0px);
   }
 }
 
@@ -6520,6 +6513,7 @@ html:has(.page--main-homepage) {
 
 .card-editor {
   min-height: 100vh;
+  min-height: 100dvh;
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
   color: white;
   padding: 20px;
@@ -6955,4 +6949,306 @@ html:has(.page--main-homepage) {
       font-size: 1.25rem;
     }
   }
+}
+
+// ============================================================
+// Homepage above-the-fold layout
+// ------------------------------------------------------------
+// The shared `.page--centered` rule reserves 120–140px of top
+// padding for the fixed header + back button. The homepage has
+// neither, so that padding was pure dead space pushing the two
+// primary CTAs ("Play Solo Quiz" / "Play Couples' Quiz") below
+// the fold. This block reclaims that space and trims the hero
+// stack so both buttons are visible on landing without scrolling.
+//
+// Scoped to `.page--main-homepage` so no other route is affected.
+// Specificity is deliberately one class higher than the rules it
+// overrides, so cascade order within this file doesn't matter.
+// ============================================================
+
+.page--main-homepage.page--centered {
+  // `100dvh` tracks the *visible* viewport on mobile browsers, so
+  // `justify-content: center` centres against the area the user can
+  // actually see rather than the taller URL-bar-less viewport.
+  min-height: 100vh;
+  min-height: 100dvh;
+
+  // Re-assert the clip from `.page--main-homepage`. The mobile rule at
+  // `.page { overflow-x: hidden }` (~line 5005) has equal specificity but
+  // comes later in the file, so below 480px it was winning and turning the
+  // homepage back into a scroll container for the decorative glow.
+  // Two classes here outranks it at every breakpoint.
+  overflow-x: hidden; // fallback for browsers without `clip` (Safari < 16)
+  overflow: clip;
+  padding-top: 32px;
+  padding-bottom: 32px;
+}
+
+.page--main-homepage {
+  .content__collab-logo {
+    width: 200px;
+    max-width: 40vw;
+    height: auto;
+    margin-top: 0;
+    margin-bottom: 32px;
+  }
+
+  // Semantic <h1> wrapper around the wordmark. Zero line-height stops
+  // the inline descender gap under the image.
+  .lovestruck-title {
+    width: 100%;
+    margin: 0;
+    line-height: 0;
+    font-size: inherit;
+  }
+
+  .content .lovestruck-title-img {
+    display: block;
+    width: 120%;
+    max-width: 120%;
+    height: auto;
+    margin: 0 0 8px;
+    margin-left: -10%; // keep the oversized wordmark optically centred
+  }
+
+  .subtitle {
+    font-size: 1.0625rem;
+    line-height: 1.45;
+    max-width: 520px;
+    margin: 0 auto 24px;
+
+    p {
+      margin: 0 0 10px;
+      // Even out the line lengths so no line is left with a single orphaned
+      // word. `pretty` is the fallback where `balance` isn't supported.
+      text-wrap: pretty;
+      text-wrap: balance;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+
+  .btn-homepage {
+    padding: 18px 0;
+  }
+
+  .home-credits {
+    padding-top: 24px;
+    font-size: 0.6875rem; // 11px — a quiet footer line, not a third CTA
+    letter-spacing: 0.01em;
+    opacity: 0.75;
+  }
+}
+
+// Tablet
+@media (max-width: 768px) {
+  .page--main-homepage.page--centered {
+    padding-top: 24px;
+    padding-bottom: 24px;
+  }
+
+  .page--main-homepage {
+    .content__collab-logo {
+      width: 150px;
+      margin-bottom: 24px;
+    }
+
+    .content .lovestruck-title-img {
+      width: 110%;
+      max-width: 110%;
+      margin-left: -5%;
+    }
+
+    .subtitle {
+      font-size: 1rem;
+      max-width: 420px;
+      margin-bottom: 20px;
+    }
+  }
+}
+
+// Phones
+@media (max-width: 480px) {
+  .page--main-homepage.page--centered {
+    padding-top: 20px;
+    padding-bottom: 20px;
+  }
+
+  .page--main-homepage {
+    .content__collab-logo {
+      width: 118px;
+      max-width: 118px;
+      margin-bottom: 16px;
+    }
+
+    .content .lovestruck-title-img {
+      width: 100%;
+      max-width: 100%;
+      margin-left: 0;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-size: 0.875rem;
+      line-height: 1.45;
+      max-width: 310px;
+      margin-bottom: 16px;
+
+      p {
+        margin-bottom: 8px;
+      }
+    }
+
+    .btn-group {
+      gap: 10px;
+      max-width: 280px;
+    }
+
+    .btn-homepage {
+      padding: 15px 0;
+      min-height: 52px;
+      font-size: 0.9375rem;
+    }
+
+    .home-credits {
+      padding-top: 18px;
+      font-size: 0.625rem; // 10px
+    }
+  }
+}
+
+// ── Short-viewport adaptation ─────────────────────────────────
+// The wordmark is the tallest item in the hero stack, so on short
+// viewports (small phones, laptops with lots of browser chrome) it
+// is clamped against viewport height instead of container width.
+// `object-fit: contain` keeps its aspect ratio while the box shrinks.
+.page--main-homepage .content .lovestruck-title-img {
+  max-height: 42vh;
+  object-fit: contain;
+}
+
+@media (max-height: 700px) {
+  .page--main-homepage.page--centered {
+    padding-top: 20px;
+    padding-bottom: 20px;
+  }
+
+  .page--main-homepage {
+    .content__collab-logo {
+      width: 160px;
+      margin-bottom: 20px;
+    }
+
+    .subtitle {
+      margin-bottom: 16px;
+
+      p {
+        margin-bottom: 8px;
+      }
+    }
+
+    .home-credits {
+      padding-top: 16px;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .page--main-homepage .content .lovestruck-title-img {
+    max-height: 34vh;
+  }
+
+  .page--main-homepage .content__collab-logo {
+    width: 118px;
+  }
+}
+
+// The two primary CTAs are real <a href> elements (react-router <Link>) so
+// crawlers can discover /solo and /couples — buttons with onClick handlers
+// are invisible to them. These rules keep anchors looking like buttons.
+.page--main-homepage {
+  a.btn-homepage {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    text-align: center;
+    text-decoration: none;
+    color: $gray-800;
+  }
+
+  .home-credits {
+    a {
+      color: inherit;
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+}
+
+// CSS fallback shown for the few frames before the Lottie loader chunk lands.
+.loader__pulse {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+
+  span {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #FAC47F;
+    animation: loaderPulse 1.2s ease-in-out infinite;
+
+    &:nth-child(2) { animation-delay: 0.15s; }
+    &:nth-child(3) { animation-delay: 0.3s; }
+  }
+}
+
+@keyframes loaderPulse {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40%           { transform: scale(1);   opacity: 1; }
+}
+
+// Respect the OS "reduce motion" setting. The homepage alone runs ~15 infinite
+// animations; this is an accessibility requirement and a battery win.
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+// Available to assistive tech and crawlers, invisible on screen. Used to give
+// quiz screens a real <h1> without changing their visual design.
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+// The couples mode cards are real <a href> links (react-router <Link>) so the
+// /couples/together and /couples/remote routes have a crawlable inbound link —
+// they previously had none, and one card was a bare <div onClick>, which was
+// also unreachable by keyboard.
+a.mode-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
 }

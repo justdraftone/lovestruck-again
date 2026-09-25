@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
+import { useSeo } from '../hooks/useSeo';
 type Period = 'today' | '7d' | '30d' | '90d' | 'all'
 
 interface Visit {
@@ -258,6 +259,12 @@ function buildTimeSeries(visits: Visit[], period: Period): { label: string; even
 
 // ════════════════════════════════════════════════════════════════════════════
 export default function Admin() {
+  useSeo({
+    title: 'Admin — Love Struck Again',
+    description: 'Internal analytics dashboard.',
+    noindex: true,
+  });
+
   const [password, setPassword]       = useState('')
   const [isAuthenticated, setIsAuth]  = useState(false)
   const [allVisits, setAllVisits]     = useState<Visit[]>([])
